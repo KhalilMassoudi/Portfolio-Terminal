@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0a0a0b" />
+
+    <title>Khalil Massoudi — Software Engineer · DevOps × AI × Web</title>
+    <meta
+      name="description"
+      content="Khalil Massoudi — Software Engineer specializing in DevOps, AI, and web development. Interactive terminal portfolio showcasing projects, skills, and experience."
+    />
+    <meta name="author" content="Khalil Massoudi" />
+
+    <!-- Open Graph / social preview -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Khalil Massoudi — Software Engineer" />
+    <meta
+      property="og:description"
+      content="DevOps × AI × Web. An interactive terminal portfolio."
+    />
+    <meta property="og:image" content="./og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <!-- Boot / loading overlay (Phase D will animate this) -->
+    <div id="boot" class="boot" aria-hidden="true"></div>
+
+    <!-- Sticky navigation -->
+    <header class="nav" id="site-nav">
+      <div class="container nav__inner">
+        <a href="#home" class="nav__brand">
+          <span class="nav__prompt">&gt;</span> khalil<span class="nav__cursor">_</span>
+        </a>
+        <nav class="nav__links" id="nav-links" aria-label="Primary"></nav>
+        <a href="#contact" class="btn btn--accent nav__cta">Get in Touch</a>
+        <button class="nav__toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- Sections are progressively enhanced by JS from the data layer -->
+      <section id="home" class="section section--hero" data-section="home"></section>
+      <section id="about" class="section" data-section="about"></section>
+      <section id="skills" class="section" data-section="skills"></section>
+      <section id="projects" class="section" data-section="projects"></section>
+      <section id="experience" class="section" data-section="experience"></section>
+      <section id="contact" class="section" data-section="contact"></section>
+    </main>
+
+    <footer class="footer" id="site-footer"></footer>
+
+    <script type="module" src="./scripts/main.js"></script>
+  </body>
+</html>

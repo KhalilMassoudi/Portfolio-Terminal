@@ -1,0 +1,181 @@
+/* ============================================================
+   LAYOUT — navigation, sections, footer, buttons.
+   (Rich section internals arrive in Phases B–C.)
+   ============================================================ */
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0.7em 1.3em;
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border: 1px solid var(--c-border-strong);
+  color: var(--c-text);
+  background: var(--c-surface);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-med) var(--ease-out);
+}
+.btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--c-accent);
+  background: var(--c-surface-hover);
+}
+.btn:active {
+  transform: translateY(0);
+}
+.btn--accent {
+  background: var(--c-accent);
+  color: var(--c-accent-contrast);
+  border-color: transparent;
+}
+.btn--accent:hover {
+  background: var(--c-accent-soft);
+  box-shadow: var(--glow-accent);
+}
+
+/* ---------- Navigation ---------- */
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--nav-h);
+  z-index: var(--z-nav);
+  background: rgba(10, 10, 11, 0.6);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid transparent;
+  transition:
+    background var(--dur-med) var(--ease-out),
+    border-color var(--dur-med) var(--ease-out);
+}
+.nav.is-scrolled {
+  background: rgba(10, 10, 11, 0.82);
+  border-bottom-color: var(--c-border);
+}
+.nav__inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+.nav__brand {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: var(--fs-md);
+  letter-spacing: -0.03em;
+}
+.nav__prompt {
+  color: var(--c-accent);
+}
+.nav__cursor {
+  color: var(--c-accent);
+  animation: blink 1.1s steps(1) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+.nav__links {
+  display: flex;
+  gap: var(--sp-5);
+  margin-left: auto;
+  margin-right: var(--sp-5);
+}
+.nav__link {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  position: relative;
+  padding: var(--sp-1) 0;
+}
+.nav__link::before {
+  content: '>';
+  color: var(--c-accent);
+  opacity: 0;
+  margin-right: 4px;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.nav__link:hover,
+.nav__link.is-active {
+  color: var(--c-text);
+}
+.nav__link.is-active::before,
+.nav__link:hover::before {
+  opacity: 1;
+}
+.nav__toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  padding: var(--sp-2);
+}
+.nav__toggle span {
+  width: 24px;
+  height: 2px;
+  background: var(--c-text);
+  border-radius: 2px;
+  transition: transform var(--dur-med) var(--ease-out), opacity var(--dur-fast);
+}
+
+/* ---------- Sections ---------- */
+.section {
+  padding-block: var(--sp-9);
+  position: relative;
+}
+.section--hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding-top: var(--nav-h);
+}
+
+/* ---------- Footer ---------- */
+.footer {
+  border-top: 1px solid var(--c-border);
+  padding-block: var(--sp-6);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--c-text-faint);
+}
+
+/* ---------- Boot overlay (placeholder until Phase D) ---------- */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: var(--c-bg);
+  display: none;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .nav__links {
+    position: fixed;
+    inset: var(--nav-h) 0 auto 0;
+    flex-direction: column;
+    gap: var(--sp-4);
+    padding: var(--sp-6);
+    background: var(--c-bg-elevated);
+    border-bottom: 1px solid var(--c-border);
+    transform: translateY(-120%);
+    transition: transform var(--dur-med) var(--ease-out);
+    margin: 0;
+  }
+  .nav__links.is-open {
+    transform: translateY(0);
+  }
+  .nav__cta {
+    display: none;
+  }
+  .nav__toggle {
+    display: flex;
+  }
+}
