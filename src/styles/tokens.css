@@ -86,7 +86,16 @@
   --container: 1200px;
   --container-narrow: 820px;
   --nav-h: 68px;
+  --topbar-h: 44px;
+  --dock-h: 72px;
   --z-nav: 100;
   --z-overlay: 200;
   --z-cursor: 300;
+  --z-desktop: 1;
+  --z-icons: 5;
+  --z-topbar: 500;
+  --z-dock: 500;
+  --z-window-base: 20;
+  --z-window-focus: 400;
+  --z-boot: 900;
 }

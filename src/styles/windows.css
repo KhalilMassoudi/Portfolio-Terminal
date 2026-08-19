@@ -1,0 +1,166 @@
+/* ============================================================
+   WINDOWS — floating app chrome: titlebar, drag, resize, animation.
+   Position uses the `translate` CSS property (set inline by JS on
+   drag) so it never collides with the `scale` property used here
+   for the open/close pop animation.
+   ============================================================ */
+
+.window {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--w);
+  height: var(--h);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #111114, #0c0c0f);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  scale: 0.94;
+  opacity: 0;
+  transition:
+    opacity var(--dur-med) var(--ease-spring),
+    scale var(--dur-med) var(--ease-spring),
+    border-color var(--dur-med) var(--ease-out),
+    box-shadow var(--dur-med) var(--ease-out);
+}
+.window.is-open {
+  opacity: 1;
+  scale: 1;
+}
+.window.is-closing {
+  opacity: 0;
+  scale: 0.96;
+  transition-duration: var(--dur-fast);
+}
+.window.is-dragging {
+  transition: none;
+}
+.window.is-minimized {
+  display: none;
+}
+.window.is-focused {
+  border-color: rgba(var(--c-accent-rgb), 0.5);
+  box-shadow: var(--shadow-lg), var(--glow-accent);
+}
+
+.window__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--c-border);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  flex-shrink: 0;
+}
+.window.is-dragging .window__bar {
+  cursor: grabbing;
+}
+.window__dots {
+  display: flex;
+  gap: 7px;
+  flex-shrink: 0;
+}
+.window__dots .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+}
+.dot--r {
+  background: #ff5f57;
+  cursor: pointer;
+}
+.dot--y {
+  background: #febc2e;
+  cursor: pointer;
+}
+.dot--g {
+  background: #28c840;
+  cursor: default;
+}
+.window__title {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--c-text-faint);
+  margin-inline: auto;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.window__back {
+  display: none;
+}
+
+.window__body {
+  flex: 1;
+  overflow: auto;
+  padding: var(--sp-5);
+  font-family: var(--font-sans);
+  color: var(--c-text-muted);
+}
+.window__body--flush {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+}
+
+.window__resize {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+}
+.window__resize::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--c-border-strong);
+  border-bottom: 2px solid var(--c-border-strong);
+  border-radius: 0 0 2px 0;
+}
+
+/* ---------- Mobile: fullscreen app sheets ---------- */
+@media (max-width: 768px) {
+  .window {
+    position: fixed !important;
+    inset: var(--topbar-h) 0 0 0 !important;
+    width: 100% !important;
+    height: calc(100% - var(--topbar-h)) !important;
+    translate: 0 0 !important;
+    border-radius: 0;
+    border-width: 0;
+  }
+  .window__resize {
+    display: none;
+  }
+  .window__dots {
+    display: none;
+  }
+  .window__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--c-text);
+  }
+  .window__title {
+    margin-inline: 0 auto;
+  }
+  .window__bar {
+    cursor: default;
+  }
+}

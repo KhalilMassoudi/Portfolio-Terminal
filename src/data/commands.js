@@ -14,7 +14,11 @@ import { profile, skillGroups, projects, socials } from './content.js';
 const link = (href, text) =>
   `<a href="${href}" target="_blank" rel="noopener noreferrer" class="term-link">${text}</a>`;
 
-export function buildCommands({ commandNames }) {
+const escapeHtml = (str) =>
+  str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+export function buildCommands({ commandNames, windowManager, apps = [] }) {
+  const appIds = apps.map((a) => a.id);
   const commands = {
     help: {
       description: 'List available commands',
@@ -57,15 +61,45 @@ export function buildCommands({ commandNames }) {
       run: () =>
         socials.map((s) => `${s.label.padEnd(10)} ${link(s.href, s.value)}`).join('\n'),
     },
-    goto: {
-      description: 'Jump to a section (e.g. goto projects)',
+    open: {
+      description: 'Open an app window (e.g. open projects)',
       run: (args) => {
-        const target = (args[0] || '').toLowerCase();
-        const valid = ['home', 'about', 'skills', 'projects', 'experience', 'contact'];
-        if (!valid.includes(target)) {
-          return `Usage: goto &lt;section&gt;\nSections: ${valid.join(', ')}`;
+        const id = (args[0] || '').toLowerCase();
+        const app = apps.find((a) => a.id === id);
+        if (!app) return `Usage: open &lt;app&gt;\nApps: ${appIds.join(', ')}`;
+        if (app.action) {
+          app.action(windowManager);
+        } else {
+          windowManager.open(app.id, app);
         }
-        return { type: 'navigate', target, message: `Navigating to ${target}…` };
+        return `<span class="term-dim">Opening ${app.title}…</span>`;
+      },
+    },
+    close: {
+      description: 'Close an app window (e.g. close projects)',
+      run: (args) => {
+        const id = (args[0] || '').toLowerCase();
+        if (!id) return 'Usage: close &lt;app&gt;';
+        if (!windowManager.isOpen(id)) return `<span class="term-dim">"${escapeHtml(id)}" isn't open.</span>`;
+        windowManager.close(id);
+        return `<span class="term-dim">Closed ${id}.</span>`;
+      },
+    },
+    windows: {
+      description: 'List open app windows',
+      run: () => {
+        const open = windowManager.list();
+        if (!open.length) return '<span class="term-dim">No windows open.</span>';
+        return open
+          .map((id) => {
+            const flag = windowManager.isActive(id)
+              ? ' <span class="term-dim">(active)</span>'
+              : windowManager.isMinimized(id)
+                ? ' <span class="term-dim">(minimized)</span>'
+                : '';
+            return `<span class="term-cmd">${id}</span>${flag}`;
+          })
+          .join('\n');
       },
     },
     theme: {

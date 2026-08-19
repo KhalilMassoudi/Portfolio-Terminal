@@ -1,86 +1,66 @@
 /**
  * MAIN — application bootstrap.
- * Phase A: renders navigation + section scaffolding from the data layer,
- * wires scroll/active-link/mobile-menu behavior. Rich sections and the
- * interactive terminal are layered on in Phases B–D.
+ * A fixed desktop shell (wallpaper + topbar + icons + dock) hosts every
+ * section as an openable window, driven by one WindowManager instance
+ * shared by the GUI and the terminal's `open`/`close` commands.
  */
 
-import { nav, profile } from '../data/content.js';
+import { WindowManager } from './windows.js';
+import { renderDesktop } from './desktop.js';
+import { buildApps } from './apps.js';
+import { initTheme } from './theme.js';
+import { typewriter } from './typewriter.js';
 
-/* ---------- Navigation ---------- */
-function renderNav() {
-  const linksEl = document.getElementById('nav-links');
-  linksEl.innerHTML = nav
-    .map((n) => `<a class="nav__link" href="#${n.id}" data-nav="${n.id}">${n.label}</a>`)
-    .join('');
-}
+function playBoot() {
+  const bootEl = document.getElementById('boot');
+  if (!bootEl) return Promise.resolve();
 
-function wireNavBehavior() {
-  const navEl = document.getElementById('site-nav');
-  const toggle = document.getElementById('nav-toggle');
-  const links = document.getElementById('nav-links');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) {
+    bootEl.remove();
+    return Promise.resolve();
+  }
 
-  // Elevated nav background after scrolling
-  const onScroll = () => navEl.classList.toggle('is-scrolled', window.scrollY > 20);
-  onScroll();
-  window.addEventListener('scroll', onScroll, { passive: true });
-
-  // Mobile menu
-  toggle.addEventListener('click', () => {
-    const open = links.classList.toggle('is-open');
-    toggle.setAttribute('aria-expanded', String(open));
-  });
-  links.addEventListener('click', (e) => {
-    if (e.target.matches('.nav__link')) {
-      links.classList.remove('is-open');
-      toggle.setAttribute('aria-expanded', 'false');
-    }
+  bootEl.innerHTML = `<div class="boot__line"><span class="boot__prompt">&gt;</span><span data-boot-tw></span></div>`;
+  typewriter(bootEl.querySelector('[data-boot-tw]'), ['booting portfolio.sh …'], {
+    typeSpeed: 26,
+    startDelay: 120,
+    hold: 5000,
   });
 
-  // Scroll-spy: highlight the section in view
-  const sections = [...document.querySelectorAll('main .section')];
-  const spy = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          document
-            .querySelectorAll('.nav__link')
-            .forEach((l) => l.classList.toggle('is-active', l.dataset.nav === entry.target.id));
-        }
-      });
-    },
-    { rootMargin: `-40% 0px -55% 0px` }
-  );
-  sections.forEach((s) => spy.observe(s));
-}
-
-/* ---------- Temporary Phase-A section placeholders ---------- */
-function renderPlaceholders() {
-  const map = {
-    home: `<div class="container"><p class="term-dim" style="font-family:var(--font-mono)">&gt; booting portfolio.sh …</p>
-      <h1 style="font-size:var(--fs-3xl);margin:.3em 0">${profile.name}</h1>
-      <p style="font-size:var(--fs-md);color:var(--c-accent);font-family:var(--font-mono)">${profile.role} · ${profile.taglines[0]}</p>
-      <p style="max-width:52ch;color:var(--c-text-muted);margin-top:1rem">Foundation ready. Hero terminal &amp; sections land in the next phases.</p></div>`,
-  };
-  document.querySelectorAll('main .section').forEach((s) => {
-    const id = s.dataset.section;
-    s.innerHTML =
-      map[id] ||
-      `<div class="container"><h2 style="font-size:var(--fs-xl);color:var(--c-text-muted)">${id}</h2><p class="term-dim">Section scaffolded — content arrives in Phase C.</p></div>`;
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      bootEl.classList.add('is-done');
+      setTimeout(() => {
+        bootEl.remove();
+        resolve();
+      }, 420);
+    }, 950);
   });
 }
 
-function renderFooter() {
-  document.getElementById('site-footer').innerHTML =
-    `<div class="container">&gt; built in a terminal · © ${new Date().getFullYear()} ${profile.name}</div>`;
-}
-
-/* ---------- Boot ---------- */
 function init() {
-  renderNav();
-  renderPlaceholders();
-  renderFooter();
-  wireNavBehavior();
+  initTheme();
+
+  const wm = new WindowManager(document.getElementById('window-layer'));
+  const apps = buildApps();
+
+  renderDesktop(
+    {
+      topbarEl: document.getElementById('topbar'),
+      iconsEl: document.getElementById('desktop-icons'),
+      dockEl: document.getElementById('dock'),
+    },
+    wm,
+    apps
+  );
+
+  playBoot().then(() => {
+    const terminalApp = apps.find((a) => a.id === 'terminal');
+    const aboutApp = apps.find((a) => a.id === 'about');
+    if (terminalApp) wm.open('terminal', terminalApp);
+    if (aboutApp) wm.open('about', aboutApp);
+  });
 }
 
 if (document.readyState === 'loading') {
