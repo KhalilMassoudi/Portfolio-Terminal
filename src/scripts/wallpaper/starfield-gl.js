@@ -171,11 +171,15 @@ export async function mount(root) {
   document.addEventListener('pointermove', onMove);
   state.onMove = onMove;
 
+  // Slow autonomous sway so the scene stays alive even when the pointer
+  // never moves — pointer parallax (curX/curY) adds on top of this.
+  let idleT = 0;
   const tick = () => {
+    idleT += 0.0035;
     curX += (targetX - curX) * 0.04;
     curY += (targetY - curY) * 0.04;
-    group.rotation.y = curX * 0.15;
-    group.rotation.x = curY * 0.1;
+    group.rotation.y = curX * 0.15 + Math.sin(idleT) * 0.06;
+    group.rotation.x = curY * 0.1 + Math.cos(idleT * 0.7) * 0.035;
     render();
     state.raf = requestAnimationFrame(tick);
   };

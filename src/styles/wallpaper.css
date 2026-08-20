@@ -44,16 +44,19 @@
   background-size: 300px 300px;
   opacity: 0.45;
   transform: translate3d(calc(var(--px, 0) * 4px), calc(var(--py, 0) * 4px), 0);
+  animation: drift-far 70s ease-in-out infinite alternate;
 }
 .wallpaper__stars--mid {
   background-size: 220px 220px;
   opacity: 0.65;
   transform: translate3d(calc(var(--px, 0) * 10px), calc(var(--py, 0) * 10px), 0);
+  animation: drift-mid 50s ease-in-out infinite alternate;
 }
 .wallpaper__stars--near {
   background-size: 150px 150px;
   opacity: 0.9;
   transform: translate3d(calc(var(--px, 0) * 20px), calc(var(--py, 0) * 20px), 0);
+  animation: drift-near 32s ease-in-out infinite alternate;
 }
 
 .wallpaper__twinkles {
@@ -78,6 +81,33 @@
     transform: translate3d(2%, -2%, 0) scale(1.05);
   }
 }
+/* Ambient drift uses the standalone `translate` property (not `transform`)
+   so it composes with the JS-driven pointer-parallax `transform` above
+   instead of fighting over the same property. */
+@keyframes drift-far {
+  0% {
+    translate: 0 0;
+  }
+  100% {
+    translate: 14px -10px;
+  }
+}
+@keyframes drift-mid {
+  0% {
+    translate: 0 0;
+  }
+  100% {
+    translate: -18px 12px;
+  }
+}
+@keyframes drift-near {
+  0% {
+    translate: 0 0;
+  }
+  100% {
+    translate: 22px 16px;
+  }
+}
 @keyframes twinkle {
   0%,
   100% {
@@ -91,7 +121,8 @@
 }
 
 .wallpaper__scene.is-static .wallpaper__nebula,
-.wallpaper__scene.is-static .star--twinkle {
+.wallpaper__scene.is-static .star--twinkle,
+.wallpaper__scene.is-static .wallpaper__stars {
   animation: none;
 }
 
@@ -137,7 +168,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .wallpaper__nebula,
-  .star--twinkle {
+  .star--twinkle,
+  .wallpaper__stars {
     animation: none !important;
   }
 }
