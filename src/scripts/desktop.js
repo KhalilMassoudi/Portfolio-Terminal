@@ -44,9 +44,10 @@ function renderTopbar(root, wm, apps) {
       <span class="topbar__themes" role="group" aria-label="Accent color">
         ${themeNames.map((t) => `<button type="button" class="theme-dot theme-dot--${t}" data-theme="${t}" aria-label="${t} theme"></button>`).join('')}
       </span>
-      <span class="topbar__wallpaper" role="group" aria-label="Wallpaper renderer">
-        <button type="button" class="wallpaper-toggle" data-wallpaper="css" aria-label="CSS wallpaper renderer">CSS</button>
-        <button type="button" class="wallpaper-toggle" data-wallpaper="gl" aria-label="WebGL wallpaper renderer"${isGLSupported() ? '' : ' disabled'}>GL</button>
+      <span class="topbar__wallpaper" role="group" aria-label="Wallpaper">
+        <button type="button" class="wallpaper-toggle" data-wallpaper="hills" aria-label="Hills wallpaper">Hills</button>
+        <button type="button" class="wallpaper-toggle" data-wallpaper="stars" aria-label="Stars wallpaper">Stars</button>
+        <button type="button" class="wallpaper-toggle" data-wallpaper="stars-gl" aria-label="Stars 3D wallpaper"${isGLSupported() ? '' : ' disabled'}>3D</button>
       </span>
       <span class="topbar__socials">
         ${github ? `<a class="topbar__icon" href="${github.href}" target="_blank" rel="noopener" aria-label="GitHub">GH</a>` : ''}

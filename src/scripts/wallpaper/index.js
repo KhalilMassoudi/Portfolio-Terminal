@@ -1,15 +1,24 @@
 /**
- * WALLPAPER — orchestrates which renderer (CSS or WebGL) draws the space
- * scene behind the desktop, mirroring theme.js's init/apply/persist shape.
- * Each variant module owns its own mount(root)/unmount() lifecycle,
- * including its own listeners — this module just switches between them.
+ * WALLPAPER — orchestrates which wallpaper mode draws behind the desktop,
+ * mirroring theme.js's init/apply/persist shape. Each mode's module owns
+ * its own mount(root)/unmount() lifecycle, including its own listeners —
+ * this module just switches between them.
  */
 
-import * as cssVariant from './starfield-css.js';
-import * as glVariant from './starfield-gl.js';
+import * as hillsVariant from './hills-css.js';
+import * as starsVariant from './starfield-css.js';
+import * as starsGlVariant from './starfield-gl.js';
 
 const STORAGE_KEY = 'portfolio-wallpaper';
-const VARIANTS = { css: cssVariant, gl: glVariant };
+const DEFAULT_MODE = 'hills';
+
+// Persisted as { scene, technique } rather than the mode key directly, so a
+// future scene/technique combo doesn't need a storage-schema migration.
+const MODES = {
+  hills: { scene: 'hills', technique: 'css', mod: hillsVariant },
+  stars: { scene: 'space', technique: 'css', mod: starsVariant },
+  'stars-gl': { scene: 'space', technique: 'gl', mod: starsGlVariant },
+};
 
 let sceneEl = null;
 let active = null;
@@ -21,22 +30,26 @@ function readSaved() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    return parsed && (parsed.technique === 'css' || parsed.technique === 'gl') ? parsed : null;
+    const match = Object.entries(MODES).find(
+      ([, m]) => m.scene === parsed?.scene && m.technique === parsed?.technique
+    );
+    return match ? match[0] : null;
   } catch (_) {
     return null;
   }
 }
 
-function persist(technique) {
+function persist(mode) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ scene: 'space', technique }));
+    const { scene, technique } = MODES[mode];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ scene, technique }));
   } catch (_) {
     /* storage may be unavailable (private mode) — non-fatal */
   }
 }
 
-export async function setWallpaperMode(technique, { persistChoice = true } = {}) {
-  const requested = technique === 'gl' ? 'gl' : 'css';
+export async function setWallpaperMode(mode, { persistChoice = true } = {}) {
+  const requested = MODES[mode] ? mode : DEFAULT_MODE;
 
   if (activeMod) {
     try {
@@ -50,20 +63,21 @@ export async function setWallpaperMode(technique, { persistChoice = true } = {})
 
   let resolved = requested;
   try {
-    await VARIANTS[resolved].mount(sceneEl);
+    await MODES[resolved].mod.mount(sceneEl);
   } catch (_) {
-    // GL failed to mount (unsupported / driver issue) — fall back to CSS.
-    resolved = 'css';
+    // Mount failed (unsupported / driver issue) — fall back to the
+    // dependency-free default rather than leaving the scene empty.
+    resolved = DEFAULT_MODE;
     sceneEl.innerHTML = '';
     try {
-      await cssVariant.mount(sceneEl);
+      await MODES[DEFAULT_MODE].mod.mount(sceneEl);
     } catch (_) {
-      /* CSS variant should never throw — nothing further we can do */
+      /* the default variant should never throw — nothing further we can do */
     }
   }
 
   active = resolved;
-  activeMod = VARIANTS[resolved];
+  activeMod = MODES[resolved].mod;
   if (persistChoice) persist(resolved);
   listeners.forEach((fn) => fn(active));
 }
@@ -76,14 +90,14 @@ export function initWallpaper(el) {
   sceneEl = el.querySelector('[data-scene]');
 
   // GL reports runtime failures (lost context, a render-loop error) here
-  // instead of dying silently — fall back to CSS and remember it, so a
-  // flaky device doesn't keep retrying GL on every reload.
+  // instead of dying silently — fall back to the default and remember it,
+  // so a flaky device doesn't keep retrying GL on every reload.
   window.addEventListener('wallpaper:gl-failed', () => {
-    if (active === 'gl') setWallpaperMode('css');
+    if (active === 'stars-gl') setWallpaperMode(DEFAULT_MODE);
   });
 
   const saved = readSaved();
-  setWallpaperMode(saved ? saved.technique : 'css', { persistChoice: false });
+  setWallpaperMode(saved || DEFAULT_MODE, { persistChoice: false });
 }
 
 export function getWallpaperMode() {
@@ -91,7 +105,7 @@ export function getWallpaperMode() {
 }
 
 export function isGLSupported() {
-  return glVariant.isSupported();
+  return starsGlVariant.isSupported();
 }
 
 export function onWallpaperChange(fn) {

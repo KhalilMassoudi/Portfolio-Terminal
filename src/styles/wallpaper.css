@@ -126,6 +126,82 @@
   animation: none;
 }
 
+/* ---------- Hills variant ---------- */
+.wallpaper__horizon {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 100%, rgba(var(--c-accent-rgb), 0.18), transparent 65%),
+    linear-gradient(180deg, transparent 0%, rgba(var(--c-accent-rgb), 0.05) 55%, rgba(var(--c-accent-rgb), 0.11) 100%);
+  animation: horizon-breathe 26s ease-in-out infinite alternate;
+}
+
+.wallpaper__mound {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  translate: -50% 0;
+  border-radius: 50% 50% 0 0;
+}
+.wallpaper__mound--back {
+  width: 180%;
+  height: 32%;
+  background: linear-gradient(180deg, rgba(var(--c-accent-rgb), 0.28) 0%, #0e0f13 75%);
+  opacity: 0.6;
+  filter: blur(1.5px);
+}
+.wallpaper__mound--mid {
+  width: 145%;
+  height: 21%;
+  background: linear-gradient(180deg, rgba(var(--c-accent-rgb), 0.16) 0%, #0a0b0e 80%);
+  opacity: 0.82;
+}
+.wallpaper__mound--front {
+  width: 116%;
+  height: 12%;
+  background: linear-gradient(180deg, rgba(var(--c-accent-rgb), 0.08) 0%, #06070a 70%);
+}
+
+.wallpaper__fireflies {
+  position: absolute;
+  inset: 0;
+}
+.firefly {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(var(--c-accent-rgb), 0.9);
+  box-shadow: 0 0 6px 1px rgba(var(--c-accent-rgb), 0.55);
+  opacity: 0;
+  animation: firefly-glow var(--dur, 10s) ease-in-out var(--delay, 0s) infinite;
+}
+
+@keyframes horizon-breathe {
+  0% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes firefly-glow {
+  0%,
+  100% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  50% {
+    opacity: 0.75;
+    translate: 0 -6px;
+  }
+}
+
+.wallpaper__scene.is-static .wallpaper__horizon,
+.wallpaper__scene.is-static .firefly {
+  animation: none;
+}
+
 /* ---------- WebGL variant ---------- */
 .wallpaper__gl {
   position: absolute;
@@ -169,7 +245,9 @@
 @media (prefers-reduced-motion: reduce) {
   .wallpaper__nebula,
   .star--twinkle,
-  .wallpaper__stars {
+  .wallpaper__stars,
+  .wallpaper__horizon,
+  .firefly {
     animation: none !important;
   }
 }
