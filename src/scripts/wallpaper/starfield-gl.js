@@ -26,6 +26,10 @@ function readAccentRGB() {
   };
 }
 
+function notifyFailure() {
+  window.dispatchEvent(new CustomEvent('wallpaper:gl-failed'));
+}
+
 function paintNebula(ctx, size, { r, g, b }) {
   ctx.clearRect(0, 0, size, size);
   const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
@@ -46,6 +50,15 @@ export async function mount(root) {
   const canvas = document.createElement('canvas');
   canvas.className = 'wallpaper__gl';
   root.appendChild(canvas);
+
+  // Real devices (especially mobile) can lose the WebGL context mid-session
+  // (backgrounding, low memory, GPU driver reset) — without this, the
+  // render loop just dies silently, leaving a blank canvas forever.
+  const onContextLost = (e) => {
+    e.preventDefault();
+    notifyFailure();
+  };
+  canvas.addEventListener('webglcontextlost', onContextLost);
 
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -152,10 +165,14 @@ export async function mount(root) {
 
   const render = () => renderer.render(scene, camera);
 
-  state = { root, canvas, renderer, geometry, material, nebulaGeo, nebulaMaterial, nebulaTexture, ro, onTheme, onMove: null, raf: null };
+  state = { root, canvas, renderer, geometry, material, nebulaGeo, nebulaMaterial, nebulaTexture, ro, onTheme, onContextLost, onMove: null, raf: null };
 
   if (reduceMotion()) {
-    render();
+    try {
+      render();
+    } catch (_) {
+      notifyFailure();
+    }
     return;
   }
 
@@ -180,7 +197,12 @@ export async function mount(root) {
     curY += (targetY - curY) * 0.04;
     group.rotation.y = curX * 0.15 + Math.sin(idleT) * 0.06;
     group.rotation.x = curY * 0.1 + Math.cos(idleT * 0.7) * 0.035;
-    render();
+    try {
+      render();
+    } catch (_) {
+      notifyFailure();
+      return; // stop the loop — the orchestrator will fall back to CSS
+    }
     state.raf = requestAnimationFrame(tick);
   };
   state.raf = requestAnimationFrame(tick);
@@ -188,10 +210,11 @@ export async function mount(root) {
 
 export function unmount() {
   if (!state) return;
-  const { canvas, renderer, geometry, material, nebulaGeo, nebulaMaterial, nebulaTexture, ro, onTheme, onMove, raf } = state;
+  const { canvas, renderer, geometry, material, nebulaGeo, nebulaMaterial, nebulaTexture, ro, onTheme, onContextLost, onMove, raf } = state;
 
   if (raf) cancelAnimationFrame(raf);
   if (onMove) document.removeEventListener('pointermove', onMove);
+  canvas.removeEventListener('webglcontextlost', onContextLost);
   window.removeEventListener('themechange', onTheme);
   ro.disconnect();
 
