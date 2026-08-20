@@ -59,10 +59,21 @@ export class Terminal {
     this.screen.addEventListener('click', () => this.input.focus());
     this.screen.addEventListener('focus', () => this.input.focus());
 
-    this.input.addEventListener('focus', () => this.el.classList.add('is-focused'));
+    this.input.addEventListener('focus', () => {
+      this.el.classList.add('is-focused');
+      this.scrollToEnd();
+    });
     this.input.addEventListener('blur', () => this.el.classList.remove('is-focused'));
 
     this.input.addEventListener('keydown', (e) => this.onKey(e));
+
+    // Re-anchor to the input line when the on-screen keyboard opens/closes
+    // (it shrinks the visual viewport without necessarily resizing our layout).
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        if (document.activeElement === this.input) this.scrollToEnd();
+      });
+    }
   }
 
   onKey(e) {

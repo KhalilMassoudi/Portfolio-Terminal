@@ -138,7 +138,7 @@
     position: fixed !important;
     inset: var(--topbar-h) 0 0 0 !important;
     width: 100% !important;
-    height: calc(100% - var(--topbar-h)) !important;
+    height: calc(100dvh - var(--topbar-h)) !important;
     translate: 0 0 !important;
     border-radius: 0;
     border-width: 0;
