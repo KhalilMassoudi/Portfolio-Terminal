@@ -6,12 +6,7 @@
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse 80% 60% at 15% 8%, rgba(var(--c-accent-rgb), 0.22), transparent 60%),
-    radial-gradient(ellipse 70% 55% at 88% 12%, rgba(var(--c-term-rgb), 0.14), transparent 55%),
-    radial-gradient(ellipse 90% 70% at 50% 105%, rgba(var(--c-accent-rgb), 0.1), transparent 60%),
-    linear-gradient(180deg, #08080a 0%, #0a0a0d 45%, #0c0c10 100%);
-  transition: background var(--dur-slow) var(--ease-out);
+  background: linear-gradient(180deg, #08080a 0%, #0a0a0d 45%, #0c0c10 100%);
 }
 .desktop::before {
   /* subtle grain so the gradient doesn't band on large panels */

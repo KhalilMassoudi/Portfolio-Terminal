@@ -14,5 +14,8 @@
   "devDependencies": {
     "prettier": "^3.4.2",
     "vite": "^6.0.7"
+  },
+  "dependencies": {
+    "three": "^0.185.1"
   }
 }

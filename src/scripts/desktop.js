@@ -8,6 +8,7 @@
 
 import { profile, socials } from '../data/content.js';
 import { applyTheme, themeNames } from './theme.js';
+import { setWallpaperMode, getWallpaperMode, isGLSupported, onWallpaperChange } from './wallpaper/index.js';
 
 function launch(wm, apps, id, { fromDock = false } = {}) {
   const app = apps.find((a) => a.id === id);
@@ -43,6 +44,10 @@ function renderTopbar(root, wm, apps) {
       <span class="topbar__themes" role="group" aria-label="Accent color">
         ${themeNames.map((t) => `<button type="button" class="theme-dot theme-dot--${t}" data-theme="${t}" aria-label="${t} theme"></button>`).join('')}
       </span>
+      <span class="topbar__wallpaper" role="group" aria-label="Wallpaper renderer">
+        <button type="button" class="wallpaper-toggle" data-wallpaper="css" aria-label="CSS wallpaper renderer">CSS</button>
+        <button type="button" class="wallpaper-toggle" data-wallpaper="gl" aria-label="WebGL wallpaper renderer"${isGLSupported() ? '' : ' disabled'}>GL</button>
+      </span>
       <span class="topbar__socials">
         ${github ? `<a class="topbar__icon" href="${github.href}" target="_blank" rel="noopener" aria-label="GitHub">GH</a>` : ''}
         ${linkedin ? `<a class="topbar__icon" href="${linkedin.href}" target="_blank" rel="noopener" aria-label="LinkedIn">in</a>` : ''}
@@ -62,7 +67,18 @@ function renderTopbar(root, wm, apps) {
     if (openBtn) launch(wm, apps, openBtn.dataset.open);
     const themeBtn = e.target.closest('[data-theme]');
     if (themeBtn) applyTheme(themeBtn.dataset.theme);
+    const wallpaperBtn = e.target.closest('[data-wallpaper]');
+    if (wallpaperBtn && !wallpaperBtn.disabled) setWallpaperMode(wallpaperBtn.dataset.wallpaper);
   });
+
+  const syncWallpaperButtons = () => {
+    const mode = getWallpaperMode();
+    root.querySelectorAll('[data-wallpaper]').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.wallpaper === mode);
+    });
+  };
+  onWallpaperChange(syncWallpaperButtons);
+  syncWallpaperButtons();
 
   return {
     refresh() {
