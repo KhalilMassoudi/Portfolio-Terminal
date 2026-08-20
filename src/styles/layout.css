@@ -1,0 +1,78 @@
+/* ============================================================
+   LAYOUT — viewport lock + shared buttons.
+   The desktop shell owns the viewport; only window bodies scroll.
+   ============================================================ */
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0.7em 1.3em;
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border: 1px solid var(--c-border-strong);
+  color: var(--c-text);
+  background: var(--c-surface);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-med) var(--ease-out);
+}
+.btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--c-accent);
+  background: var(--c-surface-hover);
+}
+.btn:active {
+  transform: translateY(0);
+}
+.btn--accent {
+  background: var(--c-accent);
+  color: var(--c-accent-contrast);
+  border-color: transparent;
+}
+.btn--accent:hover {
+  background: var(--c-accent-soft);
+  box-shadow: var(--glow-accent);
+}
+.btn--sm {
+  padding: 0.45em 0.9em;
+  font-size: var(--fs-xs);
+}
+
+/* ---------- Boot overlay ---------- */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-boot);
+  background: var(--c-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+.boot.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+.boot__line {
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  color: var(--c-text-muted);
+}
+.boot__prompt {
+  color: var(--c-accent);
+  margin-right: var(--sp-2);
+}

@@ -1,0 +1,12 @@
+/* ============================================================
+   MAIN STYLESHEET — import order matters.
+   tokens → fonts → base → layout → windows → desktop → components
+   ============================================================ */
+
+@import './tokens.css';
+@import './fonts.css';
+@import './base.css';
+@import './layout.css';
+@import './windows.css';
+@import './desktop.css';
+@import './components.css';

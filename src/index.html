@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0a0a0b" />
+
+    <title>Khalil Massoudi — Software Engineer · DevOps × AI × Web</title>
+    <meta
+      name="description"
+      content="Khalil Massoudi — Software Engineer specializing in DevOps, AI, and web development. An interactive desktop-style portfolio: open windows for About, Skills, Projects, Experience, and a live terminal."
+    />
+    <meta name="author" content="Khalil Massoudi" />
+
+    <!-- Open Graph / social preview -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Khalil Massoudi — Software Engineer" />
+    <meta
+      property="og:description"
+      content="DevOps × AI × Web. An interactive desktop-style portfolio."
+    />
+    <meta property="og:image" content="./og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#desktop-icons">Skip to content</a>
+
+    <div id="boot" class="boot" aria-hidden="true"></div>
+
+    <div class="desktop" id="desktop">
+      <header class="topbar" id="topbar" role="banner"></header>
+
+      <div class="desktop__icons" id="desktop-icons" role="group" aria-label="Apps"></div>
+
+      <div class="desktop__windows" id="window-layer" aria-label="Open windows"></div>
+
+      <nav class="dock" id="dock" aria-label="Dock"></nav>
+    </div>
+
+    <script type="module" src="./scripts/main.js"></script>
+  </body>
+</html>
