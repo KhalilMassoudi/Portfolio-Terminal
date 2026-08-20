@@ -39,8 +39,6 @@ export class Terminal {
           <div class="terminal__output" data-output></div>
           <div class="terminal__line" data-inputline>
             <span class="terminal__prompt">${PROMPT}</span>
-            <span class="terminal__typed" data-typed></span>
-            <span class="terminal__caret" aria-hidden="true"></span>
             <input class="terminal__capture" data-capture aria-label="Terminal command input"
                    autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
           </div>
@@ -50,7 +48,6 @@ export class Terminal {
     this.el = this.mount.querySelector('.terminal');
     this.screen = this.mount.querySelector('.terminal__screen');
     this.output = this.mount.querySelector('[data-output]');
-    this.typed = this.mount.querySelector('[data-typed]');
     this.input = this.mount.querySelector('[data-capture]');
     this.line = this.mount.querySelector('[data-inputline]');
 
@@ -58,14 +55,9 @@ export class Terminal {
   }
 
   bind() {
-    // Focus the hidden input whenever the terminal area is clicked/tapped.
+    // Focus the input whenever the terminal area is clicked/tapped.
     this.screen.addEventListener('click', () => this.input.focus());
     this.screen.addEventListener('focus', () => this.input.focus());
-
-    // Mirror input value into the visible typed span.
-    this.input.addEventListener('input', () => {
-      this.typed.textContent = this.input.value;
-    });
 
     this.input.addEventListener('focus', () => this.el.classList.add('is-focused'));
     this.input.addEventListener('blur', () => this.el.classList.remove('is-focused'));
@@ -78,7 +70,6 @@ export class Terminal {
       e.preventDefault();
       this.execute(this.input.value);
       this.input.value = '';
-      this.typed.textContent = '';
     } else if (e.key === 'Tab') {
       e.preventDefault();
       this.autocomplete();
@@ -100,7 +91,6 @@ export class Terminal {
     const matches = this.commandNames.filter((c) => c.startsWith(val));
     if (matches.length === 1) {
       this.input.value = matches[0] + ' ';
-      this.typed.textContent = this.input.value;
     } else if (matches.length > 1) {
       this.print(`<span class="term-dim">${matches.join('   ')}</span>`);
     }
@@ -111,7 +101,6 @@ export class Terminal {
     this.historyIndex = Math.max(0, Math.min(this.history.length, this.historyIndex + dir));
     const cmd = this.history[this.historyIndex] || '';
     this.input.value = cmd;
-    this.typed.textContent = cmd;
   }
 
   execute(raw) {
