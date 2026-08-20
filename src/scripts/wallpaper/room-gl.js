@@ -1,9 +1,10 @@
 /**
  * ROOM — a furnished corner of a room (couch, coffee table, chair, plant,
- * framed art), lit from a ceiling pendant rather than a wall window, all
- * built from real Three.js geometry + lighting/shadows so it reads as an
- * actual designed space rather than a gradient faking depth. Only a very
- * subtle autonomous camera sway — no pointer reactivity.
+ * framed landscape art, a window, a welcome mat marking the entrance),
+ * lit from a ceiling pendant, all built from real Three.js geometry +
+ * lighting/shadows so it reads as an actual designed space rather than a
+ * gradient faking depth. The camera stays anchored but pans to "look
+ * around" toward the cursor, plus a small idle sway when it's still.
  */
 
 const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -162,24 +163,54 @@ function buildPlant(THREE) {
 function buildFrame(THREE, rgb) {
   const group = new THREE.Group();
   const frameMat = new THREE.MeshStandardMaterial({ color: 0x171512, roughness: 0.5, metalness: 0.3 });
-  const border = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.3, 0.06), frameMat);
+  const border = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.5, 0.06), frameMat);
   group.add(border);
 
   const size = 256;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
+  // A small abstract sunset-over-hills painting — a callback to the site's
+  // own hills wallpaper, re-themed live, instead of a flat two-tone card.
   const paint = (c) => {
-    const grad = ctx.createLinearGradient(0, 0, size, size);
-    grad.addColorStop(0, `rgb(${c.r}, ${c.g}, ${c.b})`);
-    grad.addColorStop(1, '#14120f');
-    ctx.fillStyle = grad;
+    ctx.clearRect(0, 0, size, size);
+    const sky = ctx.createLinearGradient(0, 0, 0, size);
+    sky.addColorStop(0, `rgb(${c.r}, ${c.g}, ${c.b})`);
+    sky.addColorStop(0.55, `rgb(${Math.round(c.r * 0.32)}, ${Math.round(c.g * 0.28)}, ${Math.round(c.b * 0.38)})`);
+    sky.addColorStop(1, '#0c0b09');
+    ctx.fillStyle = sky;
     ctx.fillRect(0, 0, size, size);
+
+    const glow = ctx.createRadialGradient(size * 0.5, size * 0.4, 0, size * 0.5, size * 0.4, size * 0.3);
+    glow.addColorStop(0, `rgba(${c.r}, ${c.g}, ${c.b}, 0.85)`);
+    glow.addColorStop(1, `rgba(${c.r}, ${c.g}, ${c.b}, 0)`);
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, size, size);
+
+    ctx.fillStyle = '#100e0b';
+    ctx.beginPath();
+    ctx.moveTo(0, size * 0.76);
+    ctx.quadraticCurveTo(size * 0.25, size * 0.6, size * 0.5, size * 0.72);
+    ctx.quadraticCurveTo(size * 0.75, size * 0.82, size, size * 0.68);
+    ctx.lineTo(size, size);
+    ctx.lineTo(0, size);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#040302';
+    ctx.beginPath();
+    ctx.moveTo(0, size * 0.89);
+    ctx.quadraticCurveTo(size * 0.3, size * 0.79, size * 0.6, size * 0.87);
+    ctx.quadraticCurveTo(size * 0.8, size * 0.93, size, size * 0.85);
+    ctx.lineTo(size, size);
+    ctx.lineTo(0, size);
+    ctx.closePath();
+    ctx.fill();
   };
   paint(rgb);
   const texture = new THREE.CanvasTexture(canvas);
   const artMat = new THREE.MeshBasicMaterial({ map: texture });
-  const art = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 1.12), artMat);
+  const art = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 1.3), artMat);
   art.position.z = 0.035;
   group.add(art);
 
@@ -187,6 +218,106 @@ function buildFrame(THREE, rgb) {
     group: shadowed(group),
     materials: [frameMat, artMat],
     geometries: [border.geometry, art.geometry],
+    texture,
+    repaint: () => {
+      paint(readAccentRGB());
+      texture.needsUpdate = true;
+    },
+  };
+}
+
+function buildWindow(THREE) {
+  const group = new THREE.Group();
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0x14100c, roughness: 0.6, metalness: 0.2 });
+
+  const W = 2.2;
+  const H = 2.8;
+  const border = new THREE.Mesh(new THREE.BoxGeometry(W + 0.16, H + 0.16, 0.08), frameMat);
+  group.add(border);
+
+  // The border above is a solid slab, not a hollow frame — glass/mullions
+  // must sit clearly in front of its face (z > 0.04) or it occludes them.
+  const vMullionGeo = new THREE.BoxGeometry(0.06, H, 0.06);
+  const vMullion = new THREE.Mesh(vMullionGeo, frameMat);
+  vMullion.position.z = 0.075;
+  group.add(vMullion);
+
+  const hMullionGeo = new THREE.BoxGeometry(W, 0.06, 0.06);
+  const hMullion = new THREE.Mesh(hMullionGeo, frameMat);
+  hMullion.position.z = 0.075;
+  group.add(hMullion);
+
+  // A believable neutral daylight sky (unlit — reads as light coming
+  // through, not tinted by the room's accent-colored pendant).
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const sky = ctx.createLinearGradient(0, 0, 0, size);
+  sky.addColorStop(0, '#bcd6e8');
+  sky.addColorStop(0.55, '#e7d9b8');
+  sky.addColorStop(1, '#f2e6c8');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+  [
+    [0.3, 0.3, 0.5],
+    [0.68, 0.22, 0.4],
+    [0.5, 0.46, 0.35],
+  ].forEach(([x, y, s]) => {
+    ctx.beginPath();
+    ctx.ellipse(size * x, size * y, size * s * 0.3, size * s * 0.12, 0, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  const texture = new THREE.CanvasTexture(canvas);
+  const glassMat = new THREE.MeshBasicMaterial({ map: texture });
+  const glassGeo = new THREE.PlaneGeometry(W, H);
+  const glass = new THREE.Mesh(glassGeo, glassMat);
+  glass.position.z = 0.05;
+  group.add(glass);
+
+  return {
+    group: shadowed(group),
+    materials: [frameMat, glassMat],
+    geometries: [border.geometry, vMullionGeo, hMullionGeo, glassGeo],
+    texture,
+  };
+}
+
+function buildMat(THREE, rgb) {
+  const group = new THREE.Group();
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const paint = (c) => {
+    ctx.fillStyle = '#2a2420';
+    ctx.fillRect(0, 0, size, size);
+    ctx.strokeStyle = `rgba(${c.r}, ${c.g}, ${c.b}, 0.85)`;
+    ctx.lineWidth = 10;
+    ctx.strokeRect(14, 14, size - 28, size - 28);
+    ctx.strokeStyle = `rgba(${c.r}, ${c.g}, ${c.b}, 0.3)`;
+    ctx.lineWidth = 3;
+    for (let i = 34; i < size - 30; i += 16) {
+      ctx.beginPath();
+      ctx.moveTo(i, 30);
+      ctx.lineTo(i, size - 30);
+      ctx.stroke();
+    }
+  };
+  paint(rgb);
+  const texture = new THREE.CanvasTexture(canvas);
+  const matMat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.95 });
+  const matGeo = new THREE.PlaneGeometry(1.6, 1.0);
+  const mat = new THREE.Mesh(matGeo, matMat);
+  mat.rotation.x = -Math.PI / 2;
+  mat.position.y = 0.006;
+  group.add(mat);
+
+  return {
+    group: shadowed(group),
+    materials: [matMat],
+    geometries: [matGeo],
     texture,
     repaint: () => {
       paint(readAccentRGB());
@@ -246,6 +377,8 @@ export async function mount(root) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
@@ -285,6 +418,12 @@ export async function mount(root) {
   fill.position.set(4, 3, 6);
   scene.add(fill);
 
+  // Soft daylight spilling in from the new window, independent of the
+  // accent-colored pendant so the window reads as a real light source.
+  const daylight = new THREE.PointLight(0xd8e4f0, 5, 10, 2);
+  daylight.position.set(-ROOM_W / 2 + 2, 0.6, 2.2);
+  scene.add(daylight);
+
   const { r, g, b } = readAccentRGB();
   const accentColor = new THREE.Color(r / 255, g / 255, b / 255);
 
@@ -306,6 +445,10 @@ export async function mount(root) {
   add(buildPlant(THREE), [-5.6, FLOOR_Y, -5.7], 0);
   const frame = add(buildFrame(THREE, { r, g, b }), [2.3, 0.6, -ROOM_D / 2 + 0.05], 0);
   const pendant = add(buildPendant(THREE, accentColor), [-1, ROOM_H / 2 - 0.4, -4.5], 0);
+  add(buildWindow(THREE), [-ROOM_W / 2 + 0.07, 0.5, -2], Math.PI / 2);
+  // The room's only walls are the back wall and this left/side wall, so the
+  // open right-front area already reads as the entrance — the mat marks it.
+  const mat = add(buildMat(THREE, { r, g, b }), [3.4, FLOOR_Y, -1.2], 0.15);
 
   const spot = new THREE.SpotLight(accentColor, 950, 16, Math.PI / 3.4, 0.6, 1.4);
   spot.position.set(-1, ROOM_H / 2 - 0.6, -4.5);
@@ -334,6 +477,7 @@ export async function mount(root) {
     couch.pillowMat.color.copy(c);
     pendant.bulbMat.color.copy(c);
     frame.repaint();
+    mat.repaint();
   };
   window.addEventListener('themechange', onTheme);
 
@@ -349,6 +493,7 @@ export async function mount(root) {
     ro,
     onTheme,
     onContextLost,
+    onMove: null,
     raf: null,
   };
 
@@ -361,13 +506,34 @@ export async function mount(root) {
     return;
   }
 
+  // "Look around" the room with the cursor — camera position stays anchored
+  // (only a small idle sway), but where it's *looking* pans toward the
+  // pointer, so you can see toward the window/mat or the plant/frame side.
+  let targetX = 0;
+  let targetY = 0;
+  let curX = 0;
+  let curY = 0;
+
+  if (!matchMedia('(pointer: coarse)').matches) {
+    const onMove = (e) => {
+      targetX = (e.clientX / window.innerWidth) * 2 - 1;
+      targetY = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    document.addEventListener('pointermove', onMove);
+    state.onMove = onMove;
+  }
+
   let t = 0;
   const tick = () => {
     t += 0.0016;
-    const sway = Math.sin(t) * 0.18;
-    const bob = Math.cos(t * 0.7) * 0.06;
-    camera.position.set(basePos.x + sway, basePos.y + bob, basePos.z);
-    camera.lookAt(lookTarget);
+    curX += (targetX - curX) * 0.06;
+    curY += (targetY - curY) * 0.06;
+
+    const idleSway = Math.sin(t) * 0.15;
+    const idleBob = Math.cos(t * 0.7) * 0.05;
+    camera.position.set(basePos.x + idleSway, basePos.y + idleBob, basePos.z);
+    camera.lookAt(lookTarget.x + curX * 2.4, lookTarget.y + curY * 1.2, lookTarget.z);
+
     try {
       render();
     } catch (_) {
@@ -381,11 +547,12 @@ export async function mount(root) {
 
 export function unmount() {
   if (!state) return;
-  const { canvas, renderer, geometries, materials, textures, ro, onTheme, onContextLost, raf } = state;
+  const { canvas, renderer, geometries, materials, textures, ro, onTheme, onContextLost, onMove, raf } = state;
 
   if (raf) cancelAnimationFrame(raf);
   canvas.removeEventListener('webglcontextlost', onContextLost);
   window.removeEventListener('themechange', onTheme);
+  if (onMove) document.removeEventListener('pointermove', onMove);
   ro.disconnect();
 
   geometries.forEach((geo) => geo.dispose());
