@@ -5,16 +5,21 @@
  * this module just switches between them.
  */
 
+import * as roomVariant from './room-gl.js';
 import * as hillsVariant from './hills-css.js';
 import * as starsVariant from './starfield-css.js';
 import * as starsGlVariant from './starfield-gl.js';
 
 const STORAGE_KEY = 'portfolio-wallpaper';
-const DEFAULT_MODE = 'hills';
+const DEFAULT_MODE = 'room';
+// Where a failed mount or a runtime GL failure falls back to — always the
+// dependency-free CSS variant, never another WebGL mode (that could loop).
+const SAFE_FALLBACK = 'hills';
 
 // Persisted as { scene, technique } rather than the mode key directly, so a
 // future scene/technique combo doesn't need a storage-schema migration.
 const MODES = {
+  room: { scene: 'room', technique: 'gl', mod: roomVariant },
   hills: { scene: 'hills', technique: 'css', mod: hillsVariant },
   stars: { scene: 'space', technique: 'css', mod: starsVariant },
   'stars-gl': { scene: 'space', technique: 'gl', mod: starsGlVariant },
@@ -66,13 +71,13 @@ export async function setWallpaperMode(mode, { persistChoice = true } = {}) {
     await MODES[resolved].mod.mount(sceneEl);
   } catch (_) {
     // Mount failed (unsupported / driver issue) — fall back to the
-    // dependency-free default rather than leaving the scene empty.
-    resolved = DEFAULT_MODE;
+    // dependency-free variant rather than leaving the scene empty.
+    resolved = SAFE_FALLBACK;
     sceneEl.innerHTML = '';
     try {
-      await MODES[DEFAULT_MODE].mod.mount(sceneEl);
+      await MODES[SAFE_FALLBACK].mod.mount(sceneEl);
     } catch (_) {
-      /* the default variant should never throw — nothing further we can do */
+      /* the safe fallback should never throw — nothing further we can do */
     }
   }
 
@@ -90,10 +95,10 @@ export function initWallpaper(el) {
   sceneEl = el.querySelector('[data-scene]');
 
   // GL reports runtime failures (lost context, a render-loop error) here
-  // instead of dying silently — fall back to the default and remember it,
-  // so a flaky device doesn't keep retrying GL on every reload.
+  // instead of dying silently — fall back to the safe CSS variant and
+  // remember it, so a flaky device doesn't keep retrying GL on reload.
   window.addEventListener('wallpaper:gl-failed', () => {
-    if (active === 'stars-gl') setWallpaperMode(DEFAULT_MODE);
+    if (active === 'room' || active === 'stars-gl') setWallpaperMode(SAFE_FALLBACK);
   });
 
   const saved = readSaved();

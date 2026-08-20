@@ -275,6 +275,9 @@
   .topbar__clock {
     display: none;
   }
+  .topbar__socials {
+    display: none;
+  }
 
   .desktop__icons {
     position: absolute;

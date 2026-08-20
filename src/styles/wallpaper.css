@@ -259,4 +259,10 @@
   .wallpaper-toggle {
     padding: 3px 6px;
   }
+  /* Four pills plus theme dots plus socials overflows narrow topbars —
+     keep just the flagship (Room) and the dependency-free fallback (Hills). */
+  .wallpaper-toggle[data-wallpaper='stars'],
+  .wallpaper-toggle[data-wallpaper='stars-gl'] {
+    display: none;
+  }
 }

@@ -45,6 +45,7 @@ function renderTopbar(root, wm, apps) {
         ${themeNames.map((t) => `<button type="button" class="theme-dot theme-dot--${t}" data-theme="${t}" aria-label="${t} theme"></button>`).join('')}
       </span>
       <span class="topbar__wallpaper" role="group" aria-label="Wallpaper">
+        <button type="button" class="wallpaper-toggle" data-wallpaper="room" aria-label="3D Room wallpaper"${isGLSupported() ? '' : ' disabled'}>Room</button>
         <button type="button" class="wallpaper-toggle" data-wallpaper="hills" aria-label="Hills wallpaper">Hills</button>
         <button type="button" class="wallpaper-toggle" data-wallpaper="stars" aria-label="Stars wallpaper">Stars</button>
         <button type="button" class="wallpaper-toggle" data-wallpaper="stars-gl" aria-label="Stars 3D wallpaper"${isGLSupported() ? '' : ' disabled'}>3D</button>
