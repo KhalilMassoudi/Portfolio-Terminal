@@ -10,6 +10,7 @@ import { renderDesktop } from './desktop.js';
 import { buildApps } from './apps.js';
 import { initTheme } from './theme.js';
 import { typewriter } from './typewriter.js';
+import { initWallpaper } from './wallpaper/index.js';
 
 function playBoot() {
   const bootEl = document.getElementById('boot');
@@ -41,6 +42,7 @@ function playBoot() {
 
 function init() {
   initTheme();
+  initWallpaper(document.getElementById('wallpaper'));
 
   const wm = new WindowManager(document.getElementById('window-layer'));
   const apps = buildApps();

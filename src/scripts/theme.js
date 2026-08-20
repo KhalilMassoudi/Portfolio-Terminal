@@ -37,6 +37,7 @@ export function applyTheme(name) {
   } catch (_) {
     /* storage may be unavailable (private mode) — non-fatal */
   }
+  window.dispatchEvent(new CustomEvent('themechange', { detail: root.dataset.theme }));
 }
 
 export function initTheme() {
