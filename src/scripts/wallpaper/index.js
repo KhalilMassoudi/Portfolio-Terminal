@@ -75,6 +75,13 @@ export function initWallpaper(el) {
   `;
   sceneEl = el.querySelector('[data-scene]');
 
+  // GL reports runtime failures (lost context, a render-loop error) here
+  // instead of dying silently — fall back to CSS and remember it, so a
+  // flaky device doesn't keep retrying GL on every reload.
+  window.addEventListener('wallpaper:gl-failed', () => {
+    if (active === 'gl') setWallpaperMode('css');
+  });
+
   const saved = readSaved();
   setWallpaperMode(saved ? saved.technique : 'css', { persistChoice: false });
 }
