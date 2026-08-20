@@ -1,7 +1,7 @@
 /**
  * ROOM — a furnished corner of a room (couch, coffee table, chair, plant,
- * framed landscape art, a window, a welcome mat marking the entrance),
- * lit from a ceiling pendant, all built from real Three.js geometry +
+ * framed landscape art, a window looking out onto a night sky), lit from
+ * a ceiling pendant, all built from real Three.js geometry +
  * lighting/shadows so it reads as an actual designed space rather than a
  * gradient faking depth. The camera stays anchored but pans to "look
  * around" toward the cursor, plus a small idle sway when it's still.
@@ -247,28 +247,39 @@ function buildWindow(THREE) {
   hMullion.position.z = 0.075;
   group.add(hMullion);
 
-  // A believable neutral daylight sky (unlit — reads as light coming
-  // through, not tinted by the room's accent-colored pendant).
+  // A dark night sky, not daylight — the room itself is dark/moody, so a
+  // bright window read as wrong (it's dark outside too). Soft moon + stars.
   const size = 256;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
   const sky = ctx.createLinearGradient(0, 0, 0, size);
-  sky.addColorStop(0, '#bcd6e8');
-  sky.addColorStop(0.55, '#e7d9b8');
-  sky.addColorStop(1, '#f2e6c8');
+  sky.addColorStop(0, '#0a0e1a');
+  sky.addColorStop(0.6, '#131b2e');
+  sky.addColorStop(1, '#1c2436');
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, size, size);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
-  [
-    [0.3, 0.3, 0.5],
-    [0.68, 0.22, 0.4],
-    [0.5, 0.46, 0.35],
-  ].forEach(([x, y, s]) => {
+
+  const moonGlow = ctx.createRadialGradient(size * 0.7, size * 0.28, 0, size * 0.7, size * 0.28, size * 0.22);
+  moonGlow.addColorStop(0, 'rgba(222, 227, 240, 0.45)');
+  moonGlow.addColorStop(1, 'rgba(222, 227, 240, 0)');
+  ctx.fillStyle = moonGlow;
+  ctx.fillRect(0, 0, size, size);
+
+  ctx.fillStyle = '#e7eaf2';
+  ctx.beginPath();
+  ctx.arc(size * 0.7, size * 0.28, size * 0.05, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+  for (let i = 0; i < 22; i++) {
+    const x = Math.random() * size;
+    const y = Math.random() * size * 0.65;
+    const rDot = Math.random() * 1.1 + 0.3;
     ctx.beginPath();
-    ctx.ellipse(size * x, size * y, size * s * 0.3, size * s * 0.12, 0, 0, Math.PI * 2);
+    ctx.arc(x, y, rDot, 0, Math.PI * 2);
     ctx.fill();
-  });
+  }
   const texture = new THREE.CanvasTexture(canvas);
   const glassMat = new THREE.MeshBasicMaterial({ map: texture });
   const glassGeo = new THREE.PlaneGeometry(W, H);
@@ -281,48 +292,6 @@ function buildWindow(THREE) {
     materials: [frameMat, glassMat],
     geometries: [border.geometry, vMullionGeo, hMullionGeo, glassGeo],
     texture,
-  };
-}
-
-function buildMat(THREE, rgb) {
-  const group = new THREE.Group();
-  const size = 256;
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  const paint = (c) => {
-    ctx.fillStyle = '#2a2420';
-    ctx.fillRect(0, 0, size, size);
-    ctx.strokeStyle = `rgba(${c.r}, ${c.g}, ${c.b}, 0.85)`;
-    ctx.lineWidth = 10;
-    ctx.strokeRect(14, 14, size - 28, size - 28);
-    ctx.strokeStyle = `rgba(${c.r}, ${c.g}, ${c.b}, 0.3)`;
-    ctx.lineWidth = 3;
-    for (let i = 34; i < size - 30; i += 16) {
-      ctx.beginPath();
-      ctx.moveTo(i, 30);
-      ctx.lineTo(i, size - 30);
-      ctx.stroke();
-    }
-  };
-  paint(rgb);
-  const texture = new THREE.CanvasTexture(canvas);
-  const matMat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.95 });
-  const matGeo = new THREE.PlaneGeometry(1.6, 1.0);
-  const mat = new THREE.Mesh(matGeo, matMat);
-  mat.rotation.x = -Math.PI / 2;
-  mat.position.y = 0.006;
-  group.add(mat);
-
-  return {
-    group: shadowed(group),
-    materials: [matMat],
-    geometries: [matGeo],
-    texture,
-    repaint: () => {
-      paint(readAccentRGB());
-      texture.needsUpdate = true;
-    },
   };
 }
 
@@ -418,11 +387,10 @@ export async function mount(root) {
   fill.position.set(4, 3, 6);
   scene.add(fill);
 
-  // Soft daylight spilling in from the new window, independent of the
-  // accent-colored pendant so the window reads as a real light source.
-  const daylight = new THREE.PointLight(0xd8e4f0, 5, 10, 2);
-  daylight.position.set(-ROOM_W / 2 + 2, 0.6, 2.2);
-  scene.add(daylight);
+  // Faint cool moonlight near the window — subtle, since it's dark outside.
+  const moonlight = new THREE.PointLight(0x9fb0d0, 2.5, 10, 2);
+  moonlight.position.set(-ROOM_W / 2 + 2, 0.6, 2.2);
+  scene.add(moonlight);
 
   const { r, g, b } = readAccentRGB();
   const accentColor = new THREE.Color(r / 255, g / 255, b / 255);
@@ -446,9 +414,6 @@ export async function mount(root) {
   const frame = add(buildFrame(THREE, { r, g, b }), [2.3, 0.6, -ROOM_D / 2 + 0.05], 0);
   const pendant = add(buildPendant(THREE, accentColor), [-1, ROOM_H / 2 - 0.4, -4.5], 0);
   add(buildWindow(THREE), [-ROOM_W / 2 + 0.07, 0.5, -2], Math.PI / 2);
-  // The room's only walls are the back wall and this left/side wall, so the
-  // open right-front area already reads as the entrance — the mat marks it.
-  const mat = add(buildMat(THREE, { r, g, b }), [3.4, FLOOR_Y, -1.2], 0.15);
 
   const spot = new THREE.SpotLight(accentColor, 950, 16, Math.PI / 3.4, 0.6, 1.4);
   spot.position.set(-1, ROOM_H / 2 - 0.6, -4.5);
@@ -477,7 +442,6 @@ export async function mount(root) {
     couch.pillowMat.color.copy(c);
     pendant.bulbMat.color.copy(c);
     frame.repaint();
-    mat.repaint();
   };
   window.addEventListener('themechange', onTheme);
 
@@ -508,7 +472,7 @@ export async function mount(root) {
 
   // "Look around" the room with the cursor — camera position stays anchored
   // (only a small idle sway), but where it's *looking* pans toward the
-  // pointer, so you can see toward the window/mat or the plant/frame side.
+  // pointer, so you can see toward the window/plant side or the frame side.
   let targetX = 0;
   let targetY = 0;
   let curX = 0;
