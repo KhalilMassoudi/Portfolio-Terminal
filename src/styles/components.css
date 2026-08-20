@@ -39,6 +39,7 @@
 }
 
 .terminal__line {
+  position: relative;
   display: flex;
   align-items: baseline;
   gap: var(--sp-2);
@@ -67,11 +68,18 @@
 }
 .terminal__capture {
   position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  opacity: 0.01;
-  transform: translateX(-9999px);
-  pointer-events: none;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  opacity: 0;
+  font: inherit;
+  font-size: max(var(--fs-sm), 16px);
 }
 
 /* Inline text roles used inside terminal output */

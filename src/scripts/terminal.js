@@ -41,10 +41,10 @@ export class Terminal {
             <span class="terminal__prompt">${PROMPT}</span>
             <span class="terminal__typed" data-typed></span>
             <span class="terminal__caret" aria-hidden="true"></span>
+            <input class="terminal__capture" data-capture aria-label="Terminal command input"
+                   autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
           </div>
         </div>
-        <input class="terminal__capture" data-capture aria-label="Terminal command input"
-               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
       </div>`;
 
     this.el = this.mount.querySelector('.terminal');
