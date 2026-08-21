@@ -50,7 +50,8 @@ function init() {
   renderDesktop(
     {
       topbarEl: document.getElementById('topbar'),
-      iconsEl: document.getElementById('desktop-icons'),
+      iconsLeftEl: document.getElementById('desktop-icons-left'),
+      iconsRightEl: document.getElementById('desktop-icons-right'),
       dockEl: document.getElementById('dock'),
     },
     wm,
