@@ -46,8 +46,6 @@ function renderTopbar(root, wm, apps) {
       </span>
       <span class="topbar__wallpaper" role="group" aria-label="Wallpaper">
         <button type="button" class="wallpaper-toggle" data-wallpaper="room" aria-label="3D Room wallpaper"${isGLSupported() ? '' : ' disabled'}>Room</button>
-        <button type="button" class="wallpaper-toggle" data-wallpaper="hills" aria-label="Hills wallpaper">Hills</button>
-        <button type="button" class="wallpaper-toggle" data-wallpaper="stars" aria-label="Stars wallpaper">Stars</button>
         <button type="button" class="wallpaper-toggle" data-wallpaper="stars-gl" aria-label="Stars 3D wallpaper"${isGLSupported() ? '' : ' disabled'}>3D</button>
       </span>
       <span class="topbar__socials">
@@ -140,9 +138,18 @@ function renderDock(root, wm, apps) {
   };
 }
 
-export function renderDesktop({ topbarEl, iconsEl, dockEl }, wm, apps) {
+export function renderDesktop({ topbarEl, iconsLeftEl, iconsRightEl, dockEl }, wm, apps) {
   const topbar = renderTopbar(topbarEl, wm, apps);
-  renderIcons(iconsEl, wm, apps);
+  renderIcons(
+    iconsLeftEl,
+    wm,
+    apps.filter((a) => a.side !== 'right')
+  );
+  renderIcons(
+    iconsRightEl,
+    wm,
+    apps.filter((a) => a.side === 'right')
+  );
   const dock = renderDock(dockEl, wm, apps);
 
   const refresh = () => {

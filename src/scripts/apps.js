@@ -122,6 +122,7 @@ export function buildApps() {
       width: 560,
       height: 480,
       inMenu: true,
+      side: 'left',
       render: renderAbout,
     },
     {
@@ -131,6 +132,7 @@ export function buildApps() {
       width: 520,
       height: 420,
       inMenu: true,
+      side: 'left',
       render: renderSkills,
     },
     {
@@ -140,6 +142,7 @@ export function buildApps() {
       width: 620,
       height: 520,
       inMenu: true,
+      side: 'left',
       render: renderProjects,
     },
     {
@@ -149,6 +152,7 @@ export function buildApps() {
       width: 560,
       height: 480,
       inMenu: true,
+      side: 'right',
       render: renderExperience,
     },
     {
@@ -158,6 +162,7 @@ export function buildApps() {
       width: 460,
       height: 400,
       inMenu: true,
+      side: 'right',
       render: renderContact,
     },
     {
@@ -167,6 +172,7 @@ export function buildApps() {
       width: 640,
       height: 440,
       inMenu: false,
+      side: 'right',
       bodyClass: 'window__body--flush',
       render: (container, wm) => new Terminal(container, { windowManager: wm, apps }),
     },
@@ -178,6 +184,7 @@ export function buildApps() {
       title: 'Résumé',
       icon: '&#8595;',
       inMenu: false,
+      side: 'right',
       action: () => window.open(profile.resumeUrl, '_blank', 'noopener'),
     });
   }

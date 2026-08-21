@@ -6,23 +6,21 @@
  */
 
 import * as roomVariant from './room-gl.js';
-import * as hillsVariant from './hills-css.js';
-import * as starsVariant from './starfield-css.js';
 import * as starsGlVariant from './starfield-gl.js';
 
 const STORAGE_KEY = 'portfolio-wallpaper';
 const DEFAULT_MODE = 'room';
-// Where a failed mount or a runtime GL failure falls back to — always the
-// dependency-free CSS variant, never another WebGL mode (that could loop).
-const SAFE_FALLBACK = 'hills';
+// Both user-facing modes need WebGL, so there's no dependency-free variant
+// left to fall back to — this is a deliberate no-op (plain dark background)
+// used only when a mount fails or the GL context is lost mid-session.
+const SAFE_FALLBACK = 'none';
 
 // Persisted as { scene, technique } rather than the mode key directly, so a
 // future scene/technique combo doesn't need a storage-schema migration.
 const MODES = {
   room: { scene: 'room', technique: 'gl', mod: roomVariant },
-  hills: { scene: 'hills', technique: 'css', mod: hillsVariant },
-  stars: { scene: 'space', technique: 'css', mod: starsVariant },
   'stars-gl': { scene: 'space', technique: 'gl', mod: starsGlVariant },
+  none: { scene: 'none', technique: 'none', mod: { mount: () => {}, unmount: () => {} } },
 };
 
 let sceneEl = null;
@@ -70,14 +68,14 @@ export async function setWallpaperMode(mode, { persistChoice = true } = {}) {
   try {
     await MODES[resolved].mod.mount(sceneEl);
   } catch (_) {
-    // Mount failed (unsupported / driver issue) — fall back to the
-    // dependency-free variant rather than leaving the scene empty.
+    // Mount failed (unsupported / driver issue) — fall back to the no-op
+    // rather than leaving a half-initialized scene.
     resolved = SAFE_FALLBACK;
     sceneEl.innerHTML = '';
     try {
       await MODES[SAFE_FALLBACK].mod.mount(sceneEl);
     } catch (_) {
-      /* the safe fallback should never throw — nothing further we can do */
+      /* the no-op fallback should never throw — nothing further we can do */
     }
   }
 
@@ -95,8 +93,8 @@ export function initWallpaper(el) {
   sceneEl = el.querySelector('[data-scene]');
 
   // GL reports runtime failures (lost context, a render-loop error) here
-  // instead of dying silently — fall back to the safe CSS variant and
-  // remember it, so a flaky device doesn't keep retrying GL on reload.
+  // instead of dying silently — fall back to the no-op and remember it, so
+  // a flaky device doesn't keep retrying GL on every reload.
   window.addEventListener('wallpaper:gl-failed', () => {
     if (active === 'room' || active === 'stars-gl') setWallpaperMode(SAFE_FALLBACK);
   });
