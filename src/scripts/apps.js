@@ -29,18 +29,48 @@ function renderAbout(container) {
 }
 
 function renderSkills(container) {
-  container.innerHTML = `
-    <div class="app app-skills">
-      ${skillGroups
-        .map(
-          (g) => `
+  const showList = () => {
+    container.innerHTML = `
+      <div class="app app-skills">
+        <p class="app-skills__intro term-dim">Pick a category to see what's inside.</p>
+        <div class="skill-cats">
+          ${skillGroups
+            .map(
+              (g) => `
+            <button type="button" class="skill-cat" data-cat="${g.id}">
+              <span class="skill-cat__icon" aria-hidden="true">${g.icon}</span>
+              <span class="skill-cat__title">${g.title}</span>
+              <span class="skill-cat__blurb term-dim">${g.blurb}</span>
+              <span class="skill-cat__count term-dim">${g.items.length} skills &rarr;</span>
+            </button>`
+            )
+            .join('')}
+        </div>
+      </div>`;
+
+    container.querySelectorAll('[data-cat]').forEach((btn) => {
+      btn.addEventListener('click', () => showGroup(btn.dataset.cat));
+    });
+  };
+
+  const showGroup = (id) => {
+    const g = skillGroups.find((s) => s.id === id);
+    if (!g) return showList();
+
+    container.innerHTML = `
+      <div class="app app-skills app-skills--detail">
+        <button type="button" class="skill-back">&larr; All categories</button>
         <section class="skill-group">
           <h3 class="term-accent">${g.title}</h3>
+          <p class="term-dim">${g.blurb}</p>
           <div class="chip-row">${chips(g.items)}</div>
-        </section>`
-        )
-        .join('')}
-    </div>`;
+        </section>
+      </div>`;
+
+    container.querySelector('.skill-back').addEventListener('click', showList);
+  };
+
+  showList();
 }
 
 function renderProjects(container) {
@@ -129,8 +159,8 @@ export function buildApps() {
       id: 'skills',
       title: 'Skills',
       icon: '#',
-      width: 520,
-      height: 420,
+      width: 560,
+      height: 460,
       inMenu: true,
       side: 'left',
       render: renderSkills,
