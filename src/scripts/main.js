@@ -59,10 +59,8 @@ function init() {
   );
 
   playBoot().then(() => {
-    const terminalApp = apps.find((a) => a.id === 'terminal');
-    const aboutApp = apps.find((a) => a.id === 'about');
-    if (terminalApp) wm.open('terminal', terminalApp);
-    if (aboutApp) wm.open('about', aboutApp);
+    const welcomeApp = apps.find((a) => a.id === 'welcome');
+    if (welcomeApp) wm.open('welcome', welcomeApp);
   });
 }
 

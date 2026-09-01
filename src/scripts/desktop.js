@@ -140,17 +140,20 @@ function renderDock(root, wm, apps) {
 
 export function renderDesktop({ topbarEl, iconsLeftEl, iconsRightEl, dockEl }, wm, apps) {
   const topbar = renderTopbar(topbarEl, wm, apps);
+  // `hidden` apps (welcome, cv-request) are opened directly by other UI, not
+  // via a desktop icon or dock slot.
+  const visibleApps = apps.filter((a) => !a.hidden);
   renderIcons(
     iconsLeftEl,
     wm,
-    apps.filter((a) => a.side !== 'right')
+    visibleApps.filter((a) => a.side !== 'right')
   );
   renderIcons(
     iconsRightEl,
     wm,
-    apps.filter((a) => a.side === 'right')
+    visibleApps.filter((a) => a.side === 'right')
   );
-  const dock = renderDock(dockEl, wm, apps);
+  const dock = renderDock(dockEl, wm, visibleApps);
 
   const refresh = () => {
     topbar.refresh();

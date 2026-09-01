@@ -116,11 +116,13 @@ export function buildCommands({ commandNames, windowManager, apps = [] }) {
       run: () => `${profile.name} — ${profile.role}. ${profile.status}.`,
     },
     resume: {
-      description: 'Download my resume',
-      run: () =>
-        profile.resumeUrl
-          ? { type: 'download', target: profile.resumeUrl, message: 'Opening resume…' }
-          : 'Resume coming soon.',
+      description: 'Request my CV',
+      run: () => {
+        const app = apps.find((a) => a.id === 'cv-request');
+        if (!app) return 'CV request is unavailable right now.';
+        windowManager.open('cv-request', app);
+        return '<span class="term-dim">Opening CV request…</span>';
+      },
     },
     clear: {
       description: 'Clear the terminal',

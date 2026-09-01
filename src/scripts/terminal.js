@@ -151,10 +151,6 @@ export class Terminal {
         this.onTheme(result.target);
         this.print(`<span class="term-dim">${result.message}</span>`);
         break;
-      case 'download':
-        if (result.message) this.print(`<span class="term-dim">${result.message}</span>`);
-        window.open(result.target, '_blank', 'noopener');
-        break;
       default:
         if (result.message) this.print(result.message);
     }

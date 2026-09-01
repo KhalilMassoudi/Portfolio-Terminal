@@ -4,11 +4,14 @@
  * duplicates data, only markup.
  */
 
-import { profile, stats, skillGroups, projects, timeline, socials } from '../data/content.js';
+import { profile, stats, skillGroups, projects, timeline, socials, welcomeNote } from '../data/content.js';
 import { Terminal } from './terminal.js';
 import { typewriter } from './typewriter.js';
 
 const chips = (items) => items.map((i) => `<span class="chip">${i}</span>`).join('');
+
+const escapeHtml = (str) =>
+  String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 // Set right before opening/rerendering the Projects window, consumed once by
 // renderProjects — lets the Skills app deep-link into "projects that used
@@ -20,6 +23,12 @@ function openProjectsForSkill(wm, apps, skillId) {
   if (!app) return;
   projectsFilter = skillId;
   if (!wm.rerender('projects', app.render)) wm.open('projects', app);
+}
+
+function openCvRequest(wm, apps) {
+  const app = apps.find((a) => a.id === 'cv-request');
+  if (!app) return;
+  if (!wm.rerender('cv-request', app.render)) wm.open('cv-request', app);
 }
 
 function renderAbout(container) {
@@ -38,6 +47,80 @@ function renderAbout(container) {
       </div>
     </div>`;
   typewriter(container.querySelector('[data-tw]'), profile.taglines);
+}
+
+function renderWelcome(container, wm, apps) {
+  container.innerHTML = `
+    <div class="app app-welcome">
+      ${welcomeNote.paragraphs.map((p) => `<p>${p}</p>`).join('')}
+      <button type="button" class="btn btn--accent btn--sm app-welcome__cta">${welcomeNote.cta} &rarr;</button>
+    </div>`;
+
+  container.querySelector('.app-welcome__cta').addEventListener('click', () => openCvRequest(wm, apps));
+}
+
+function renderCvRequest(container) {
+  let values = { name: '', email: '' };
+
+  const renderForm = ({ pending = false, error = '' } = {}) => {
+    container.innerHTML = `
+      <div class="app app-cv">
+        <p class="app-cv__intro term-dim">Tell me where to send it — real addresses only, no lists, no spam.</p>
+        <form class="cv-form" novalidate>
+          <label class="cv-form__field">
+            <span class="term-dim">Name</span>
+            <input type="text" name="name" autocomplete="name" placeholder="Optional" value="${escapeHtml(values.name)}">
+          </label>
+          <label class="cv-form__field">
+            <span class="term-dim">Email</span>
+            <input type="email" name="email" autocomplete="email" placeholder="you@example.com" required value="${escapeHtml(values.email)}">
+          </label>
+          <label class="cv-form__honeypot" aria-hidden="true">
+            <span>Company</span>
+            <input type="text" name="company" tabindex="-1" autocomplete="off">
+          </label>
+          ${error ? `<p class="cv-form__error">${escapeHtml(error)}</p>` : ''}
+          <button type="submit" class="btn btn--accent btn--sm" ${pending ? 'disabled' : ''}>${pending ? 'Checking…' : 'Request CV'}</button>
+        </form>
+      </div>`;
+
+    container.querySelector('.cv-form').addEventListener('submit', onSubmit);
+  };
+
+  const renderResult = (data) => {
+    const note = data.emailed
+      ? "Sent — check your inbox in a minute. You can also grab it directly below."
+      : 'Here&rsquo;s your download link.';
+    container.innerHTML = `
+      <div class="app app-cv app-cv--done">
+        <p class="term-accent">You&rsquo;re verified.</p>
+        <p>${note}</p>
+        <a class="btn btn--accent btn--sm" href="${data.downloadUrl}" download="Khalil-Massoudi-CV.pdf">Download CV &rarr;</a>
+      </div>`;
+  };
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    values = { name: form.name.value, email: form.email.value };
+    const company = form.company.value; // honeypot — real visitors never fill this
+
+    renderForm({ pending: true });
+    try {
+      const res = await fetch('/api/request-cv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...values, company }),
+      });
+      const data = await res.json();
+      if (data.ok) renderResult(data);
+      else renderForm({ error: data.reason || 'Something went wrong — please try again.' });
+    } catch (_) {
+      renderForm({ error: 'Network error — please try again in a moment.' });
+    }
+  }
+
+  renderForm();
 }
 
 function renderSkills(container, wm, apps) {
@@ -159,7 +242,7 @@ function renderExperience(container) {
     </div>`;
 }
 
-function renderContact(container) {
+function renderContact(container, wm, apps) {
   const email = socials.find((s) => s.id === 'email');
   container.innerHTML = `
     <div class="app app-contact">
@@ -175,8 +258,13 @@ function renderContact(container) {
           )
           .join('')}
       </ul>
-      ${email ? `<a class="btn btn--accent" href="${email.href}">Say hello &rarr;</a>` : ''}
+      <div class="contact-ctas">
+        ${email ? `<a class="btn btn--accent" href="${email.href}">Say hello &rarr;</a>` : ''}
+        <button type="button" class="btn btn--sm contact-cta__cv">Get my CV &rarr;</button>
+      </div>
     </div>`;
+
+  container.querySelector('.contact-cta__cv').addEventListener('click', () => openCvRequest(wm, apps));
 }
 
 export function buildApps() {
@@ -229,7 +317,7 @@ export function buildApps() {
       height: 400,
       inMenu: true,
       side: 'right',
-      render: renderContact,
+      render: (container, wm) => renderContact(container, wm, apps),
     },
     {
       id: 'terminal',
@@ -242,18 +330,29 @@ export function buildApps() {
       bodyClass: 'window__body--flush',
       render: (container, wm) => new Terminal(container, { windowManager: wm, apps }),
     },
-  ];
-
-  if (profile.resumeUrl) {
-    apps.push({
-      id: 'resume',
-      title: 'Résumé',
-      icon: '&#8595;',
+    // Not desktop icons or dock entries (see `hidden` in desktop.js) — these
+    // two are opened directly: welcome once at boot, cv-request from its CTA.
+    {
+      id: 'welcome',
+      title: 'Welcome',
+      icon: '~',
+      width: 500,
+      height: 480,
       inMenu: false,
-      side: 'right',
-      action: () => window.open(profile.resumeUrl, '_blank', 'noopener'),
-    });
-  }
+      hidden: true,
+      render: (container, wm) => renderWelcome(container, wm, apps),
+    },
+    {
+      id: 'cv-request',
+      title: 'Get CV',
+      icon: '&#8595;',
+      width: 420,
+      height: 360,
+      inMenu: false,
+      hidden: true,
+      render: renderCvRequest,
+    },
+  ];
 
   return apps;
 }
