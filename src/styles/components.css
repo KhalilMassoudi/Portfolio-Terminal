@@ -375,6 +375,78 @@
 .contact-list__label {
   flex-shrink: 0;
 }
+.contact-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+/* ---------- Welcome (shown once, alone, on boot) ---------- */
+.app-welcome {
+  gap: var(--sp-4);
+}
+.app-welcome p {
+  line-height: 1.7;
+}
+.app-welcome p:first-child {
+  font-family: var(--font-mono);
+  color: var(--c-accent);
+}
+.app-welcome__cta {
+  align-self: flex-start;
+  margin-top: var(--sp-2);
+}
+
+/* ---------- Get CV form ---------- */
+.app-cv__intro {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+.cv-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.cv-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+.cv-form__field input {
+  padding: 0.6em 0.8em;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: max(var(--fs-sm), 16px);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.cv-form__field input:focus-visible {
+  outline: none;
+  border-color: var(--c-accent);
+}
+.cv-form__honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.cv-form__error {
+  color: var(--c-danger);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+.cv-form button {
+  align-self: flex-start;
+}
+.app-cv--done {
+  gap: var(--sp-3);
+}
 
 @media (max-width: 480px) {
   .stat-row {

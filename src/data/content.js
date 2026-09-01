@@ -19,7 +19,6 @@ export const profile = {
   location: 'Tunisia', // TODO confirm
   status: 'Open to opportunities',
   bio: `I'm a software engineer who lives at the intersection of DevOps, AI, and web development. I care about building systems that are reliable, well-crafted, and a pleasure to use — from CI/CD pipelines to intelligent applications and polished interfaces.`,
-  resumeUrl: '', // TODO add /resume.pdf
 };
 
 export const stats = [
@@ -27,6 +26,16 @@ export const stats = [
   { value: 10, suffix: '+', label: 'Projects Built' }, // TODO confirm
   { value: 8, suffix: '+', label: 'Technologies' },
 ];
+
+/** The one-time message shown before the desktop, in its own window. */
+export const welcomeNote = {
+  paragraphs: [
+    `Thanks for stopping by.`,
+    `I built this site the way I like to build things — as a small working system, not just a page. Somewhere between a terminal, a 3D room, and a running record of what I ship across DevOps, AI, and web engineering.`,
+    `Everything in here is real: the skills, the projects, the way I think about reliable software. Take a look around, one window at a time.`,
+  ],
+  cta: 'Get my CV',
+};
 
 /**
  * Skills grouped by domain — the Skills app shows these as a category

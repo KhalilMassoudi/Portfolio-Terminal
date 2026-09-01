@@ -16,6 +16,7 @@
     "vite": "^6.0.7"
   },
   "dependencies": {
+    "disposable-email-domains": "^1.0.62",
     "three": "^0.185.1"
   }
 }
