@@ -70,7 +70,11 @@ export const skillGroups = [
   },
 ];
 
-/** Projects — `featured: true` surfaces them first. */
+/**
+ * Projects — `featured: true` surfaces them first. `skills` references
+ * `skillGroups` ids above, so the Skills app can link to the projects
+ * that used a given category.
+ */
 export const projects = [
   {
     id: 'qms',
@@ -79,6 +83,7 @@ export const projects = [
     description:
       'A quality management system built with a Spring Boot backend and an Angular frontend, streamlining audits, non-conformities, and reporting.',
     tags: ['Spring Boot', 'Angular', 'MySQL'],
+    skills: ['web'],
     links: { demo: '', code: '' }, // TODO
     featured: true,
     year: 2025,
@@ -90,6 +95,7 @@ export const projects = [
     description:
       'An intelligent chatbot leveraging NLP to deliver contextual, human-like responses.',
     tags: ['Python', 'NLP', 'AI'],
+    skills: ['ai'],
     links: { demo: '', code: '' }, // TODO
     featured: true,
     year: 2024,
@@ -101,6 +107,7 @@ export const projects = [
     description:
       'A mobile application designed to detect and counter negativity on social platforms, promoting healthier online interaction.',
     tags: ['Mobile', 'AI/ML'],
+    skills: ['ai'],
     links: { demo: '', code: '' }, // TODO
     featured: false,
     year: 2024,

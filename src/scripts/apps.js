@@ -10,6 +10,18 @@ import { typewriter } from './typewriter.js';
 
 const chips = (items) => items.map((i) => `<span class="chip">${i}</span>`).join('');
 
+// Set right before opening/rerendering the Projects window, consumed once by
+// renderProjects — lets the Skills app deep-link into "projects that used
+// this category" without Projects needing to know about Skills.
+let projectsFilter = null;
+
+function openProjectsForSkill(wm, apps, skillId) {
+  const app = apps.find((a) => a.id === 'projects');
+  if (!app) return;
+  projectsFilter = skillId;
+  if (!wm.rerender('projects', app.render)) wm.open('projects', app);
+}
+
 function renderAbout(container) {
   container.innerHTML = `
     <div class="app app-about">
@@ -28,7 +40,7 @@ function renderAbout(container) {
   typewriter(container.querySelector('[data-tw]'), profile.taglines);
 }
 
-function renderSkills(container) {
+function renderSkills(container, wm, apps) {
   const showList = () => {
     container.innerHTML = `
       <div class="app app-skills">
@@ -64,21 +76,41 @@ function renderSkills(container) {
           <h3 class="term-accent">${g.title}</h3>
           <p class="term-dim">${g.blurb}</p>
           <div class="chip-row">${chips(g.items)}</div>
+          <button type="button" class="btn btn--accent btn--sm skill-group__cta">View related projects &rarr;</button>
         </section>
       </div>`;
 
     container.querySelector('.skill-back').addEventListener('click', showList);
+    container.querySelector('.skill-group__cta').addEventListener('click', () => openProjectsForSkill(wm, apps, g.id));
   };
 
   showList();
 }
 
 function renderProjects(container) {
+  const filterId = projectsFilter;
+  projectsFilter = null; // one-shot — a normal reopen (icon/dock/menu) always shows everything
+
+  const category = filterId ? skillGroups.find((g) => g.id === filterId) : null;
+  const list = category ? projects.filter((p) => p.skills?.includes(filterId)) : projects;
+
+  const showAll = () => renderProjects(container);
+
   container.innerHTML = `
     <div class="app app-projects">
-      ${projects
-        .map(
-          (p) => `
+      ${
+        category
+          ? `<div class="projects-filter">
+              <span class="term-dim">Filtered by</span> <span class="term-accent">${category.title}</span>
+              <button type="button" class="skill-back projects-filter__clear">Show all projects</button>
+            </div>`
+          : ''
+      }
+      ${
+        list.length
+          ? list
+              .map(
+                (p) => `
         <article class="project-card">
           <header class="project-card__head">
             <h3>${p.title}</h3>
@@ -96,9 +128,13 @@ function renderProjects(container) {
               : ''
           }
         </article>`
-        )
-        .join('')}
+              )
+              .join('')
+          : `<p class="term-dim">No projects tagged with ${category.title} yet — check back soon.</p>`
+      }
     </div>`;
+
+  container.querySelector('.projects-filter__clear')?.addEventListener('click', showAll);
 }
 
 function renderExperience(container) {
@@ -163,7 +199,7 @@ export function buildApps() {
       height: 460,
       inMenu: true,
       side: 'left',
-      render: renderSkills,
+      render: (container, wm) => renderSkills(container, wm, apps),
     },
     {
       id: 'projects',
