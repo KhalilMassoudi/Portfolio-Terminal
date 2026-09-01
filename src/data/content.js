@@ -28,25 +28,45 @@ export const stats = [
   { value: 8, suffix: '+', label: 'Technologies' },
 ];
 
-/** Skills grouped by domain — each group renders as a card. */
+/**
+ * Skills grouped by domain — the Skills app shows these as a category
+ * picker first, then the chips for whichever one is selected.
+ */
 export const skillGroups = [
   {
     id: 'devops',
-    title: 'DevOps & Cloud',
-    icon: 'infra',
+    title: 'Dev & Ops',
+    icon: 'ops',
+    blurb: 'Build, ship, automate.',
     items: ['Docker', 'Kubernetes', 'CI/CD', 'Linux', 'Git'],
+  },
+  {
+    id: 'cloud',
+    title: 'Cloud',
+    icon: 'cld',
+    blurb: 'Infrastructure & platforms.',
+    items: ['AWS', 'Vercel', 'Terraform', 'Nginx'], // TODO confirm cloud stack
   },
   {
     id: 'ai',
     title: 'AI & Data',
     icon: 'ai',
+    blurb: 'Models, pipelines, insight.',
     items: ['Machine Learning', 'Python', 'Data Pipelines', 'NLP'],
   },
   {
     id: 'web',
     title: 'Web & Backend',
     icon: 'web',
+    blurb: 'Interfaces & APIs.',
     items: ['Angular', 'Spring Boot', 'PHP', 'JavaScript', 'REST APIs'],
+  },
+  {
+    id: 'soft',
+    title: 'Soft Skills',
+    icon: 'sft',
+    blurb: 'How I work with people.',
+    items: ['Communication', 'Teamwork', 'Problem Solving', 'Adaptability', 'Time Management'], // TODO confirm
   },
 ];
 
