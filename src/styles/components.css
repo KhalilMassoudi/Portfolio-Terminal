@@ -270,6 +270,23 @@
 .skill-group > p {
   margin-bottom: var(--sp-3);
 }
+.skill-group__cta {
+  margin-top: var(--sp-4);
+}
+
+/* ---------- Projects filter bar (deep-linked from Skills) ---------- */
+.projects-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--c-border);
+}
+.projects-filter__clear {
+  margin-left: auto;
+}
 
 /* ---------- Projects ---------- */
 .project-card {

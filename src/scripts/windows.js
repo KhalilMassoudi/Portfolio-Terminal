@@ -120,6 +120,15 @@ export class WindowManager {
     this._emit();
   }
 
+  rerender(id, render) {
+    const w = this.windows.get(id);
+    if (!w || typeof render !== 'function') return false;
+    const body = w.el.querySelector('[data-body]');
+    render(body, this);
+    this.focus(id);
+    return true;
+  }
+
   focus(id) {
     const w = this.windows.get(id);
     if (!w) return;
