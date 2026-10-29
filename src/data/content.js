@@ -27,6 +27,30 @@ export const stats = [
   { value: 8, suffix: '+', label: 'Technologies' },
 ];
 
+/**
+ * The little 3D "me" walking around the Room wallpaper. Colors are any CSS
+ * color; `shirt: 'accent'` follows the live theme color.
+ */
+export const avatar = {
+  skin: '#b07f5f',
+  hair: '#17120f',
+  shirt: 'accent',
+  pants: '#2b3445',
+  shoes: '#ece8e1',
+  beard: true, // short, trimmed full beard
+  mustache: true,
+  glasses: false,
+};
+
+/**
+ * Framed BJJ belt standing on the console table in the Room.
+ * belt: 'white' | 'blue' | 'purple' | 'brown' | 'black'
+ */
+export const bjj = {
+  belt: 'white',
+  label: '1 year of BJJ',
+};
+
 /** The one-time message shown before the desktop, in its own window. */
 export const welcomeNote = {
   paragraphs: [
