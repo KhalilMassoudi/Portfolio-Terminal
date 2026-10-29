@@ -1,11 +1,18 @@
 /**
  * ROOM — a furnished corner of a room (couch, coffee table, chair, plant,
- * framed landscape art, a window looking out onto a night sky), lit from
+ * framed landscape art, a console table holding a framed BJJ belt, a window looking out onto a night sky), lit from
  * a ceiling pendant, all built from real Three.js geometry +
  * lighting/shadows so it reads as an actual designed space rather than a
  * gradient faking depth. The camera stays anchored but pans to "look
  * around" toward the cursor, plus a small idle sway when it's still.
  */
+
+import { avatar as avatarConfig, bjj } from '../../data/content.js';
+import { buildAvatar } from './avatar.js';
+import { createNavGrid } from './nav-grid.js';
+
+// Clicks on any of these belong to the UI, not the room floor.
+const UI_SELECTOR = '.window, .topbar, .dock, .icon-tile, a, button, input, textarea, select, label';
 
 const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -295,6 +302,205 @@ function buildWindow(THREE) {
   };
 }
 
+function buildConsole(THREE) {
+  const group = new THREE.Group();
+  const topMat = new THREE.MeshStandardMaterial({ color: 0x2b2018, roughness: 0.35, metalness: 0.1 });
+  const legMat = new THREE.MeshStandardMaterial({ color: 0x14100c, roughness: 0.4, metalness: 0.6 });
+
+  const top = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.06, 0.55), topMat);
+  top.position.y = 0.85;
+  group.add(top);
+
+  const shelf = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.04, 0.46), topMat);
+  shelf.position.y = 0.22;
+  group.add(shelf);
+
+  const legGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.85, 8);
+  [
+    [-1.18, -0.22],
+    [1.18, -0.22],
+    [-1.18, 0.22],
+    [1.18, 0.22],
+  ].forEach(([x, z]) => {
+    const leg = new THREE.Mesh(legGeo, legMat);
+    leg.position.set(x, 0.425, z);
+    group.add(leg);
+  });
+
+  return {
+    group: shadowed(group),
+    materials: [topMat, legMat],
+    geometries: [top.geometry, shelf.geometry, legGeo],
+  };
+}
+
+const BELT_COLORS = {
+  white: { belt: '#f4f2ec', shade: '#d9d5cb', bar: '#141414' },
+  blue: { belt: '#2457b8', shade: '#173c85', bar: '#141414' },
+  purple: { belt: '#6b3fa0', shade: '#4b2a73', bar: '#141414' },
+  brown: { belt: '#6b4428', shade: '#4a2e1a', bar: '#141414' },
+  black: { belt: '#1b1b1d', shade: '#0e0e10', bar: '#c4232b' },
+};
+
+// The framed belt: drawn on a canvas (belt with knot + hanging tails, rank
+// bar, caption), unlit and un-tonemapped so it reads crisp in the dark room.
+function paintBelt(ctx, W, H, { belt, label }) {
+  const c = BELT_COLORS[belt] || BELT_COLORS.white;
+  const sans = "'Inter', system-ui, sans-serif";
+
+  const bg = ctx.createRadialGradient(W / 2, H * 0.4, 0, W / 2, H * 0.4, W * 0.65);
+  bg.addColorStop(0, '#262830');
+  bg.addColorStop(1, '#111216');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(28, 28, W - 56, H - 56);
+
+  // A strip of belt fabric along the local x axis: shaded, with stitch rows.
+  const strip = (len, thick, { bar = null } = {}) => {
+    const g = ctx.createLinearGradient(0, -thick / 2, 0, thick / 2);
+    g.addColorStop(0, c.belt);
+    g.addColorStop(1, c.shade);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, -thick / 2, len, thick);
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.13)';
+    ctx.lineWidth = 2;
+    for (let k = 1; k < 7; k++) {
+      const y = -thick / 2 + (thick * k) / 7;
+      ctx.beginPath();
+      ctx.moveTo(4, y);
+      ctx.lineTo(len - 4, y);
+      ctx.stroke();
+    }
+    if (bar) {
+      ctx.fillStyle = c.bar;
+      ctx.fillRect(bar[0], -thick / 2, bar[1], thick);
+    }
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(0, -thick / 2, len, thick);
+  };
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetY = 8;
+
+  const beltY = H * 0.33;
+  const thick = 76;
+  ctx.save();
+  ctx.translate(90, beltY);
+  strip(W - 180, thick);
+  ctx.restore();
+
+  // Tails hanging from the knot, the right one carrying the rank bar.
+  const tail = (angle, len, bar) => {
+    ctx.save();
+    ctx.translate(W / 2, beltY + 10);
+    ctx.rotate(angle);
+    strip(len, thick, { bar });
+    ctx.restore();
+  };
+  tail(Math.PI * 0.64, 190);
+  tail(Math.PI * 0.36, 205, [115, 60]);
+
+  // Knot
+  const kw = 120;
+  const kh = 96;
+  const kg = ctx.createLinearGradient(0, beltY - kh / 2, 0, beltY + kh / 2);
+  kg.addColorStop(0, c.belt);
+  kg.addColorStop(1, c.shade);
+  ctx.fillStyle = kg;
+  ctx.beginPath();
+  ctx.roundRect(W / 2 - kw / 2, beltY - kh / 2, kw, kh, 14);
+  ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(W / 2 - kw / 2, beltY - kh / 2, kw, kh, 14);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - kw / 2 + 10, beltY + kh / 2 - 10);
+  ctx.lineTo(W / 2 + kw / 2 - 10, beltY - kh / 2 + 10);
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.font = `700 34px ${sans}`;
+  ctx.letterSpacing = '8px';
+  ctx.fillText(`${belt.toUpperCase()} BELT`, W / 2, H * 0.74);
+  ctx.letterSpacing = '2px';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `800 84px ${sans}`;
+  ctx.fillText(label.toUpperCase(), W / 2, H * 0.9);
+  ctx.letterSpacing = '0px';
+}
+
+function buildBeltFrame(THREE, bjj) {
+  const group = new THREE.Group();
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0x0f0e0d, roughness: 0.45, metalness: 0.35 });
+
+  const FW = 1.8;
+  const FH = 1.18;
+  const border = new THREE.Mesh(new THREE.BoxGeometry(FW, FH, 0.07), frameMat);
+  border.position.y = FH / 2;
+  group.add(border);
+
+  const W = 1024;
+  const H = 640;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  const repaint = () => {
+    paintBelt(ctx, W, H, bjj);
+    texture.needsUpdate = true;
+  };
+  repaint();
+  // The caption uses Inter — repaint once the webfont is actually ready.
+  document.fonts?.ready.then(repaint);
+
+  const artMat = new THREE.MeshBasicMaterial({
+    map: texture,
+    toneMapped: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+  });
+  const art = new THREE.Mesh(new THREE.PlaneGeometry(FW - 0.14, (FW - 0.14) * (H / W)), artMat);
+  // The border is a solid slab (front face at z 0.035): keep the art clearly
+  // in front of it, or the two z-fight and the frame bleeds through.
+  art.position.set(0, FH / 2, 0.05);
+  group.add(art);
+
+  // Easel strut behind, so it visibly stands rather than floats.
+  // Its top meets the frame's back and its foot kicks out behind, never
+  // poking through the picture.
+  const STRUT_L = 0.85;
+  const STRUT_TILT = 0.3;
+  const strut = new THREE.Mesh(new THREE.BoxGeometry(0.06, STRUT_L, 0.03), frameMat);
+  strut.position.set(0, (STRUT_L / 2) * Math.cos(STRUT_TILT), -0.05 - (STRUT_L / 2) * Math.sin(STRUT_TILT));
+  strut.rotation.x = STRUT_TILT;
+  group.add(strut);
+
+  group.rotation.order = 'YXZ'; // lean in the frame's own space after it's turned
+  group.rotation.x = -0.1; // leaning back slightly
+  shadowed(group);
+  art.receiveShadow = false;
+
+  return {
+    group,
+    materials: [frameMat, artMat],
+    geometries: [border.geometry, art.geometry, strut.geometry],
+    texture,
+  };
+}
+
 function buildPendant(THREE, accentColor) {
   const group = new THREE.Group();
   const metalMat = new THREE.MeshStandardMaterial({ color: 0x161616, roughness: 0.35, metalness: 0.7 });
@@ -396,7 +602,9 @@ export async function mount(root) {
   const accentColor = new THREE.Color(r / 255, g / 255, b / 255);
 
   const disposables = { geometries: [backWall.geometry, sideWall.geometry, floor.geometry], materials: [wallMat, floorMat], textures: [] };
+  const props = [];
   const add = (built, groupPos, groupRotY = 0) => {
+    props.push(built.group);
     built.group.position.set(...groupPos);
     if (groupRotY) built.group.rotation.y = groupRotY;
     scene.add(built.group);
@@ -411,9 +619,47 @@ export async function mount(root) {
   add(buildTable(THREE), [-0.8, FLOOR_Y, -3.9], 0);
   add(buildChair(THREE), [2.1, FLOOR_Y, -3.2], -Math.PI / 5);
   add(buildPlant(THREE), [-5.6, FLOOR_Y, -5.7], 0);
+  add(buildConsole(THREE), [2.6, FLOOR_Y, -ROOM_D / 2 + 0.27], 0);
+  add(buildBeltFrame(THREE, bjj), [2.6, FLOOR_Y + 0.88, -ROOM_D / 2 + 0.34], 0.2);
   const frame = add(buildFrame(THREE, { r, g, b }), [2.3, 0.6, -ROOM_D / 2 + 0.05], 0);
   const pendant = add(buildPendant(THREE, accentColor), [-1, ROOM_H / 2 - 0.4, -4.5], 0);
   add(buildWindow(THREE), [-ROOM_W / 2 + 0.07, 0.5, -2], Math.PI / 2);
+
+  // Furniture footprints on the floor (x/z), matching the placements above,
+  // so the avatar paths around them.
+  const nav = createNavGrid({
+    bounds: { minX: -ROOM_W / 2 + 0.3, maxX: ROOM_W / 2 - 0.3, minZ: -ROOM_D / 2 + 0.3, maxZ: ROOM_D / 2 - 0.3 },
+    radius: 0.22,
+    obstacles: [
+      { type: 'rect', minX: -2.46, maxX: 0.46, minZ: -6.54, maxZ: -5.475 }, // couch
+      { type: 'rect', minX: -1.45, maxX: -0.15, minZ: -4.275, maxZ: -3.525 }, // coffee table
+      { type: 'circle', x: 2.1, z: -3.2, r: 0.4 }, // chair
+      { type: 'circle', x: -5.6, z: -5.7, r: 0.28 }, // plant
+      { type: 'rect', minX: 1.35, maxX: 3.85, minZ: -7, maxZ: -6.2 }, // console + belt frame
+    ],
+  });
+
+  const me = buildAvatar(THREE, avatarConfig, accentColor);
+  me.group.position.y = FLOOR_Y;
+  me.teleport(3.2, -1.6);
+  scene.add(me.group);
+  const yawToCamera = () => {
+    const { x, z } = me.position();
+    return Math.atan2(camera.position.x - x, camera.position.z - z);
+  };
+  me.face(yawToCamera(), { instant: true });
+
+  // Ring that pops where you clicked.
+  const markerGeo = new THREE.RingGeometry(0.16, 0.22, 32);
+  markerGeo.rotateX(-Math.PI / 2);
+  const markerMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0, depthWrite: false });
+  const marker = new THREE.Mesh(markerGeo, markerMat);
+  marker.position.y = FLOOR_Y + 0.01;
+  scene.add(marker);
+  disposables.geometries.push(markerGeo);
+  disposables.materials.push(markerMat);
+  const MARKER_LIFE = 0.7;
+  let markerAge = MARKER_LIFE;
 
   const spot = new THREE.SpotLight(accentColor, 950, 16, Math.PI / 3.4, 0.6, 1.4);
   spot.position.set(-1, ROOM_H / 2 - 0.6, -4.5);
@@ -442,10 +688,49 @@ export async function mount(root) {
     couch.pillowMat.color.copy(c);
     pendant.bulbMat.color.copy(c);
     frame.repaint();
+    me.setAccent(c);
+    markerMat.color.copy(c);
   };
   window.addEventListener('themechange', onTheme);
 
   const render = () => renderer.render(scene, camera);
+  const animated = !reduceMotion();
+
+  // Click the floor → walk there (around furniture); click the avatar → wave.
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  const onClick = (e) => {
+    if (e.button !== 0 || !e.target.closest?.('#desktop') || e.target.closest(UI_SELECTOR)) return;
+    const rect = canvas.getBoundingClientRect();
+    ndc.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+
+    if (raycaster.intersectObject(me.group, true).length) {
+      if (animated) me.wave(yawToCamera());
+      return;
+    }
+    const hit = raycaster.intersectObjects([floor, backWall, sideWall, ...props], true)[0];
+    if (!hit) return;
+    const { x, z } = me.position();
+    const path = nav.findPath(x, z, hit.point.x, hit.point.z);
+    if (!path.length) return;
+
+    const [gx, gz] = path[path.length - 1];
+    if (!animated) {
+      me.teleport(gx, gz);
+      try {
+        render();
+      } catch (_) {
+        notifyFailure();
+      }
+      return;
+    }
+    marker.position.x = gx;
+    marker.position.z = gz;
+    markerAge = 0;
+    me.walk(path);
+  };
+  document.addEventListener('click', onClick);
 
   state = {
     root,
@@ -457,11 +742,13 @@ export async function mount(root) {
     ro,
     onTheme,
     onContextLost,
+    onClick,
+    me,
     onMove: null,
     raf: null,
   };
 
-  if (reduceMotion()) {
+  if (!animated) {
     try {
       render();
     } catch (_) {
@@ -488,8 +775,17 @@ export async function mount(root) {
   }
 
   let t = 0;
+  const clock = new THREE.Clock();
   const tick = () => {
+    const dt = Math.min(clock.getDelta(), 0.05);
     t += 0.0016;
+    me.update(dt);
+    if (markerAge < MARKER_LIFE) {
+      markerAge += dt;
+      const k = Math.min(1, markerAge / MARKER_LIFE);
+      marker.scale.setScalar(0.6 + k * 0.9);
+      markerMat.opacity = 1 - k;
+    }
     curX += (targetX - curX) * 0.06;
     curY += (targetY - curY) * 0.06;
 
@@ -511,14 +807,16 @@ export async function mount(root) {
 
 export function unmount() {
   if (!state) return;
-  const { canvas, renderer, geometries, materials, textures, ro, onTheme, onContextLost, onMove, raf } = state;
+  const { canvas, renderer, geometries, materials, textures, ro, onTheme, onContextLost, onClick, me, onMove, raf } = state;
 
   if (raf) cancelAnimationFrame(raf);
   canvas.removeEventListener('webglcontextlost', onContextLost);
   window.removeEventListener('themechange', onTheme);
   if (onMove) document.removeEventListener('pointermove', onMove);
+  document.removeEventListener('click', onClick);
   ro.disconnect();
 
+  me.dispose();
   geometries.forEach((geo) => geo.dispose());
   materials.forEach((mat) => mat.dispose());
   textures.forEach((tex) => tex.dispose());
